@@ -33,44 +33,45 @@ def _setup_clean_old_harnesses():
     _write_string_to_file(PROJECT_DIR, "fuzz_harness-02_01.cpp", test_string)
     _write_string_to_file(PROJECT_DIR, "fuzz_harness-02_02.cpp", test_string)
 
-def _cleanup_project():
-    shutil.rmtree(PROJECT_DIR)
+def _cleanup():
+    if os.path.exists(TEST_FILE_DIR):
+        shutil.rmtree(TEST_FILE_DIR)
 
 def test_clean_old_harnesses_buildsh():
     _setup_clean_old_harnesses()
     clean_old_harnesses(PROJECT_DIR)
     assert os.path.exists(os.path.join(PROJECT_DIR, "build.sh"))
-    _cleanup_project()
+    _cleanup()
 
 def test_clean_old_harnesses_yaml():
     _setup_clean_old_harnesses()
     clean_old_harnesses(PROJECT_DIR)
     assert os.path.exists(os.path.join(PROJECT_DIR, "project.yaml"))
-    _cleanup_project()
+    _cleanup()
 
 def test_clean_old_harnesses_dockerfile():
     _setup_clean_old_harnesses()
     clean_old_harnesses(PROJECT_DIR)
     assert os.path.exists(os.path.join(PROJECT_DIR, "Dockerfile"))
-    _cleanup_project()
+    _cleanup()
 
 def test_clean_old_harnesses_regular_fuzzer_py():
     _setup_clean_old_harnesses()
     clean_old_harnesses(PROJECT_DIR)
     assert os.path.exists(os.path.join(PROJECT_DIR, "fuzz_test.py"))
-    _cleanup_project()
+    _cleanup()
 
 def test_clean_old_harnesses_regular_fuzzer_cpp():
     _setup_clean_old_harnesses()
     clean_old_harnesses(PROJECT_DIR)
     assert os.path.exists(os.path.join(PROJECT_DIR, "fuzz_test.cpp"))
-    _cleanup_project()
+    _cleanup()
 
 def test_clean_old_harnesses_modifiedgen_fuzzer_py():
     _setup_clean_old_harnesses()
     clean_old_harnesses(PROJECT_DIR)
     assert os.path.exists(os.path.join(PROJECT_DIR, "fuzz_harness-01.py"))
-    _cleanup_project()
+    _cleanup()
 
 def test_clean_old_harnesses_gen_fuzzer_py():
     _setup_clean_old_harnesses()
@@ -79,7 +80,7 @@ def test_clean_old_harnesses_gen_fuzzer_py():
     assert not os.path.exists(os.path.join(PROJECT_DIR, "fuzz_harness-01_02.py"))
     assert not os.path.exists(os.path.join(PROJECT_DIR, "fuzz_harness-02_01.py"))
     assert not os.path.exists(os.path.join(PROJECT_DIR, "fuzz_harness-02_02.py"))
-    _cleanup_project()
+    _cleanup()
 
 def test_clean_old_harnesses_gen_fuzzer_cpp():
     _setup_clean_old_harnesses()
@@ -88,7 +89,7 @@ def test_clean_old_harnesses_gen_fuzzer_cpp():
     assert not os.path.exists(os.path.join(PROJECT_DIR, "fuzz_harness-01_02.cpp"))
     assert not os.path.exists(os.path.join(PROJECT_DIR, "fuzz_harness-02_01.cpp"))
     assert not os.path.exists(os.path.join(PROJECT_DIR, "fuzz_harness-02_02.cpp"))
-    _cleanup_project()
+    _cleanup()
 
 
 def _setup_cleanup_samples():
@@ -100,9 +101,6 @@ def _setup_cleanup_samples():
     _write_string_to_file(os.path.join(SAMPLES_DIR, "jupyter_server-jupyter_server.auth.decorator.authorized.wrapper.inner-1"), "test.txt", test_string)
     _write_string_to_file(os.path.join(SAMPLES_DIR, "jupyter_server-jupyter_server.services.contents.manager.asynccontentsmanager.copy-1"), "test.txt", test_string)
 
-def _cleanup_samples():
-    shutil.rmtree(SAMPLES_DIR)
-
 def test_cleanup_samples_argcomplete():
     _setup_cleanup_samples()
     cleanup_samples(SAMPLES_DIR, "argcomplete")
@@ -112,6 +110,7 @@ def test_cleanup_samples_argcomplete():
     assert os.path.exists(os.path.join(SAMPLES_DIR, "anyio-anyio.to_process.run_sync-1"))
     assert os.path.exists(os.path.join(SAMPLES_DIR, "jupyter_server-jupyter_server.auth.decorator.authorized.wrapper.inner-1"))
     assert os.path.exists(os.path.join(SAMPLES_DIR, "jupyter_server-jupyter_server.services.contents.manager.asynccontentsmanager.copy-1"))
+    _cleanup()
 
 def test_cleanup_samples_anyio():
     _setup_cleanup_samples()
@@ -122,6 +121,7 @@ def test_cleanup_samples_anyio():
     assert not os.path.exists(os.path.join(SAMPLES_DIR, "anyio-anyio.to_process.run_sync-1"))
     assert os.path.exists(os.path.join(SAMPLES_DIR, "jupyter_server-jupyter_server.auth.decorator.authorized.wrapper.inner-1"))
     assert os.path.exists(os.path.join(SAMPLES_DIR, "jupyter_server-jupyter_server.services.contents.manager.asynccontentsmanager.copy-1"))
+    _cleanup()
 
 def test_cleanup_samples_jupyter_server():
     _setup_cleanup_samples()
@@ -132,3 +132,4 @@ def test_cleanup_samples_jupyter_server():
     assert os.path.exists(os.path.join(SAMPLES_DIR, "anyio-anyio.to_process.run_sync-1"))
     assert not os.path.exists(os.path.join(SAMPLES_DIR, "jupyter_server-jupyter_server.auth.decorator.authorized.wrapper.inner-1"))
     assert not os.path.exists(os.path.join(SAMPLES_DIR, "jupyter_server-jupyter_server.services.contents.manager.asynccontentsmanager.copy-1"))
+    _cleanup()

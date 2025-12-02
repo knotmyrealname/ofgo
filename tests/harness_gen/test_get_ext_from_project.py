@@ -1,5 +1,6 @@
 import pytest
 import os
+import shutil
 import logging
 from helpers import ensure_dir_exists
 from harness_gen import get_ext_from_project
@@ -14,6 +15,9 @@ def _write_string_to_file(directory, name, string):
     with open(output_path, "w") as f:
         f.write(string)
 
+def _cleanup():
+    if os.path.exists(TEST_FILE_DIR):
+        shutil.rmtree(TEST_FILE_DIR)
 
 def test_get_ext_from_project_python():
     yaml = '''## Project homepage
@@ -54,6 +58,7 @@ builds_per_day: 1
 
     _write_string_to_file(TEST_FILE_DIR, "project.yaml", yaml)
     assert "py" == get_ext_from_project(TEST_FILE_DIR)
+    _cleanup()
 
 def test_get_ext_from_project_cpp():
     yaml = '''homepage: "https://www.clamav.net/"
@@ -72,6 +77,7 @@ main_repo: 'https://github.com/Cisco-Talos/clamav-devel.git'
 
     _write_string_to_file(TEST_FILE_DIR, "project.yaml", yaml)
     assert "cpp" == get_ext_from_project(TEST_FILE_DIR)
+    _cleanup()
 
 def test_get_ext_from_project_nonexistent(caplog):
     yaml = '''homepage: "https://www.clamav.net/"
@@ -94,6 +100,7 @@ main_repo: 'https://github.com/Cisco-Talos/clamav-devel.git'
         with caplog.at_level(logging.INFO):
             get_ext_from_project(TEST_FILE_DIR)
         assert "Unable to identify language" in caplog.text
+    _cleanup()
     
 def test_get_ext_from_project_bad_language():
     yaml = '''homepage: "https://www.clamav.net/"
@@ -113,6 +120,7 @@ main_repo: 'https://github.com/Cisco-Talos/clamav-devel.git'
     _write_string_to_file(TEST_FILE_DIR, "project.yaml", yaml)
     with pytest.raises(SystemExit):
         get_ext_from_project(TEST_FILE_DIR)
+    _cleanup()
 
 def test_get_ext_from_project_bad_yaml():
     yaml = '''homepage: "https://www.clamav.net/"
@@ -133,3 +141,4 @@ main_repo: 'https://github.com/Cisco-Talos/clamav-devel.git'
     _write_string_to_file(TEST_FILE_DIR, "project.yaml", yaml)
     with pytest.raises(SystemExit):
         get_ext_from_project(TEST_FILE_DIR)
+    _cleanup()
