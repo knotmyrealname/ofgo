@@ -54,17 +54,17 @@ def sync_dirs(src_dir, dest_dir):
 def check_email(email):
     regex = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
     if not bool(re.fullmatch(regex, email)):
-        raise ValueError(f'Invalid email address {email}')
+        raise ValueError(f'Invalid email. Please reenter your email address')
     try:
         valid_email = validate_email(email)
         return valid_email.email
     except EmailNotValidError as e:
-        raise ValueError(f'Invalid email address: {email}') from e
+        raise ValueError(f'Invalid email. Please reenter your email address') from e
 
 def sanitize_repo(url) :
     regex = re.compile(r'https?://[^\s/$.?#].[^\s]*')
     if not bool(regex.fullmatch(url)):
-        raise ValueError(f'Invalid repo URL {url}')
+        raise ValueError(f'Cannot access repository at {url}. Make sure your project is publicly accessible and that there are no problems with the link.')
     parsed = urlparse(url)
     if not parsed.netloc.endswith('github.com') and not parsed.netloc.endswith('gitlab.com'):
         raise ValueError(f'URL {url} not GitHub or GitLab')
@@ -152,8 +152,9 @@ def validate_model(model, temperature):
     try:
         client = openai.OpenAI(api_key=os.environ["OPENAI_API_KEY"])
     except:
-        log(r'''OPENAI_API_KEY is not exported. You can export your key using the command: 
-export OPENAI_API_KEY={your_api_key}''')
+        log('''Program execution failed: Missing OpenAI API Key.
+Make sure to export your API Key via the following command:
+   export OPENAI_API_KEY={your_api_key}''')
         sys.exit(1)
         
     ## Check model
