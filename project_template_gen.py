@@ -2,6 +2,7 @@ import os
 import sys
 import git
 import shutil
+import filecmp
 from pathlib2 import Path
 from datetime import date
 from logger_config import setup_logger
@@ -46,7 +47,6 @@ def generate_from_templates(repo_url: str, email: str, language: str, model: str
 
     if os.path.exists(project_dir):
         log(f"Project already exists at {project_dir}.")
-        return
     else:
         log(f"Generating new project at {project_dir}.")
         template = os.path.join(TEMPLATE_DIR, language)
@@ -92,5 +92,9 @@ def generate_from_templates(repo_url: str, email: str, language: str, model: str
         file.write_text(build)
             
         log("Project Config Generated. Warning: Some Config files may require further editing to be functional. This is especially true for " + 
-            "projects that have many dependency requirements. From our testing, LLMs seem to be unreliable at this job, but we have provided " + 
-            "functionality to generate with an LLM with the following command:")
+            "projects that have many dependency requirements. From our testing, LLMs seem to be unreliable at this job.")
+        
+        log("WARNING: Make sure that you update the harness (indicated by fuzz_test.\{ext\}) to be at least " +
+            "a minimal fuzz harness - the Fuzz Introspector cannot do its job without it, meaning no " +
+            "functions can be selected for harness generation.")
+    

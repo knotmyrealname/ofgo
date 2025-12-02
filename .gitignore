@@ -6,3 +6,4 @@ report/
 benchmark-sets/
 venv/
 gen-projects/
+tests/temp

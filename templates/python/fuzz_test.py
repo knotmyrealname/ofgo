@@ -18,7 +18,7 @@ import sys
 import atheris
 
 def TestOneInput(data):
-    print("Hello World")
+    ## TODO: create at least a minimal harness - The Fuzz Introspector needs something to work off of.
 
 def main():
     atheris.instrument_all()

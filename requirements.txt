@@ -1,1 +1,33 @@
 email_validator==2.3.0
+GitPython==3.1.43
+
+## From Fuzz Introspector
+beautifulsoup4==4.10.0
+cxxfilt==0.3.0
+lxml==5.3.0
+matplotlib==3.10.0
+numpy==2.1.0
+PyYAML==6.0.2
+soupsieve==2.2.1
+yapf==0.32.0
+pylint==3.0.0
+flake8
+pep8
+mypy
+toml
+psutil
+pytest
+sphinx==6.0.0
+sphinx_rtd_theme
+configparser
+coverage
+setuptools>=65.5.1 # not directly required, pinned by Snyk to avoid a vulnerability 
+tqdm # For displaying loading bar (auto-fuzz tool)
+rust-demangler # For correctly demangle rust function name
+tree-sitter==0.23.2
+tree-sitter-cpp==0.23.4
+tree-sitter-go==0.23.4
+tree-sitter-java==0.23.5
+tree-sitter-python==0.23.6
+tree-sitter-rust==0.23.2
+tree-sitter-languages==1.10.2
