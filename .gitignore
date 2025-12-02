@@ -7,3 +7,5 @@ benchmark-sets/
 venv/
 gen-projects/
 tests/temp
+.coverage
+coverage.xml

@@ -1,5 +1,6 @@
 email_validator==2.3.0
 GitPython==3.1.43
+pytest-mock==3.15.1
 
 ## From Fuzz Introspector
 beautifulsoup4==4.10.0

@@ -1,0 +1,10 @@
+[run]
+omit = 
+    */tests/*
+    */work/*
+    */results/*
+    */gen-projects/*
+    */oss-fuzz/*
+    */oss-fuzz-gen/*
+    */benchmark-sets/*
+    

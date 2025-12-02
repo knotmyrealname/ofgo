@@ -94,7 +94,7 @@ def generate_from_templates(repo_url: str, email: str, language: str, model: str
         log("Project Config Generated. Warning: Some Config files may require further editing to be functional. This is especially true for " + 
             "projects that have many dependency requirements. From our testing, LLMs seem to be unreliable at this job.")
         
-        log("WARNING: Make sure that you update the harness (indicated by fuzz_test.\{ext\}) to be at least " +
+        log(r"WARNING: Make sure that you update the harness (indicated by fuzz_test.{ext}) to be at least " +
             "a minimal fuzz harness - the Fuzz Introspector cannot do its job without it, meaning no " +
             "functions can be selected for harness generation.")
     
