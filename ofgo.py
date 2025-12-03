@@ -166,6 +166,7 @@ Make sure to export your API Key via the following command:
     except Exception as e:
         log(f'''Failed to generate test response. OpenAI API response:
 {e}''')
+        sys.exit(1)
     return 
 
 def run_on_args():

@@ -140,6 +140,17 @@ def sync_samples(projects_dir, samples_dir, project) -> bool:
                 main.sync_dirs(harness_dir, target_dir)
     return found_output
 
+def validate_project(project_dir):
+    required_items = ["build.sh", "project.yaml", "Dockerfile"]
+    for root, dirs, files in os.walk(project_dir):
+        for name in files:
+            for item in required_items:
+                if name == item:
+                    required_items.remove(item)
+    if len(required_items) != 0:
+        log(f"Error: Project at {project_dir} missing either a project.yaml, Dockerfile, or build.sh. Please add the missing file.")
+        sys.exit(1)
+
 def generate_harness(model: str, project: str, temperature: float = main.DEFAULT_TEMPERATURE):
     '''
     Generates OSS-Fuzz-gen harnesses for a given project using a specified model and temperature.
@@ -159,6 +170,7 @@ def generate_harness(model: str, project: str, temperature: float = main.DEFAULT
 
     ensure_dir_exists(GENERATED_SAMPLES_DIR)
     setup_folder_syncing(project_dir, persistent_project_dir)
+    validate_project(persistent_project_dir)
         
     ## Cleans up samples - OSS-Fuzz-gen already cleans up OSS-Fuzz/projects
     
