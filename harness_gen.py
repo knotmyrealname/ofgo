@@ -28,20 +28,15 @@ import ofgo as main
 from helpers import *
 
 ## Variable declaration
-BASE_DIR = os.path.dirname(__file__)
 BENCHMARK_HEURISTICS = "far-reach-low-coverage,low-cov-with-fuzz-keyword,easy-params-far-reach"
 NUMBER_OF_HARNESSES = 2
 NUM_SAMPLES = 1 # Currently only supports 1
 RESULTS_DIR = os.path.join(BASE_DIR, "results")
 REPORT_DIR = os.path.join(BASE_DIR, "report")
-PERSISTENCE_DIR = os.path.join(BASE_DIR, "gen-projects")
-OSS_FUZZ_PROJECTS_DIR = os.path.join(main.OSS_FUZZ_DIR, "projects")
 GENERATED_SAMPLES_DIR = os.path.join(PERSISTENCE_DIR, "SAMPLES")
-SCRIPTS_DIR = os.path.join(BASE_DIR, "scripts")
-WORK_DIR = os.path.join(BASE_DIR, "work")
 INTROSPECTOR_DIR = os.path.join(WORK_DIR, "fuzz-introspector")
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 
 ## Dict of supported languages and their file extensions
 language_exts = {
@@ -112,10 +107,10 @@ def clean_old_harnesses(project_dir: str):
 def setup_folder_syncing(project_dir: str, persistent_project_dir: str):
     if os.path.exists(persistent_project_dir): ## Prioritize our generated projects over existing projects
         log("Found OFGO-Generated project. Proceeding with Generation.")
-        main.sync_dirs(persistent_project_dir, project_dir)
+        sync_dirs(persistent_project_dir, project_dir)
     elif os.path.exists(project_dir):
         log("Found pre-existing OSS-Fuzz project. Proceeding with Generation.")
-        main.sync_dirs(project_dir, persistent_project_dir)
+        sync_dirs(project_dir, persistent_project_dir)
     else:
         log(f"Cannot find Project folder at {project_dir} or any generated projects.")
         sys.exit(1)
@@ -137,7 +132,7 @@ def sync_samples(projects_dir, samples_dir, project) -> bool:
                 found_output = True
                 harness_dir = os.path.join(projects_dir, name)
                 target_dir = os.path.join(samples_dir, name)
-                main.sync_dirs(harness_dir, target_dir)
+                sync_dirs(harness_dir, target_dir)
     return found_output
 
 def validate_project(project_dir):
@@ -176,7 +171,7 @@ def generate_harness(model: str, project: str, temperature: float = main.DEFAULT
     
     cleanup_samples(GENERATED_SAMPLES_DIR, project)
     clean_old_harnesses(project_dir)
-    main.sync_dirs(project_dir, persistent_project_dir)
+    sync_dirs(project_dir, persistent_project_dir)
 
     log(f'''Beginning OSS-Fuzz-gen harness generation. This may take a long time''')
     start = time.time()
@@ -262,4 +257,4 @@ def consolidate_harnesses(project: str, sample_num: int = 1):
                 shutil.copyfile(source_file, dest_file)
                 num_found += 1
 
-    main.sync_dirs(project_dir, persistent_project_dir)
+    sync_dirs(project_dir, persistent_project_dir)

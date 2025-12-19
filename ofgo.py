@@ -12,69 +12,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import shlex
 import sys
 import os
 import re
 import argparse
 import logging
 import shutil
-from email_validator import validate_email, EmailNotValidError
-from urllib.parse import urlparse
-import openai
+
 
 import harness_gen
 import oss_fuzz_hook
 from project_template_gen import generate_from_templates, sanitize_repo_name
 from project_basis_gen import generate_project_basis
 from logger_config import setup_logger
+from helpers import *
 
-BASE_DIR = os.path.dirname(__file__)
-DEFAULT_MODEL = "gpt-4o-mini"
-DEFAULT_TEMPERATURE = 0.4
 DEFAULT_BUILD = "TEMPLATE"
-
-## System-wide params
-OSS_FUZZ_DIR = os.path.join(BASE_DIR, "oss-fuzz")
-OSS_FUZZ_GEN_DIR = os.path.join(BASE_DIR, "oss-fuzz-gen")
 
 logger = setup_logger(__name__)
 
 def log(output): ## Green rep
     logger.info(f"\033[92moss_fuzz_gen_onboarding:\033[00m {output}")
 
-def sync_dirs(src_dir, dest_dir):
-    '''
-    Syncs two directories by deleting dest_dir (if it exists) and copying over src_dir
-    '''
-    if os.path.exists(dest_dir):
-        shutil.rmtree(dest_dir)
-    shutil.copytree(src_dir, dest_dir)
-
-def check_email(email):
-    regex = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
-    if not bool(re.fullmatch(regex, email)):
-        raise ValueError(f'Invalid email. Please reenter your email address')
-    try:
-        valid_email = validate_email(email)
-        return valid_email.email
-    except EmailNotValidError as e:
-        raise ValueError(f'Invalid email. Please reenter your email address') from e
-
-def sanitize_repo(url) :
-    regex = re.compile(r'https?://[^\s/$.?#].[^\s]*')
-    if not bool(regex.fullmatch(url)):
-        raise ValueError(f'Cannot access repository at {url}. Make sure your project is publicly accessible and that there are no problems with the link.')
-    parsed = urlparse(url)
-    if not parsed.netloc.endswith('github.com') and not parsed.netloc.endswith('gitlab.com'):
-        raise ValueError(f'URL {url} not GitHub or GitLab')
-    if parsed.scheme != 'https':
-        raise ValueError(f'URL {url} not HTTPS')
-    return shlex.quote(url)
-
 def run_interactive():
     log('Running OFGO in interactive mode')
     try:
+        build = input(f'Enter build approach: AGENT/TEMPLATE (default: {DEFAULT_BUILD}): ').strip()
+        if build == '':
+            build = DEFAULT_BUILD 
         repo = input('Enter project repo URL: ').strip()
         email = input('Enter project maintainer email: ').strip()
         language = input('Enter project language: ').strip()
@@ -88,9 +53,6 @@ def run_interactive():
             temperature = DEFAULT_TEMPERATURE
         else:
             temperature = int(temp)
-        build = input(f'Enter build approach: AGENT/TEMPLATE (default: {DEFAULT_BUILD}): ').strip()
-        if build == '':
-            build = DEFAULT_BUILD 
         args = argparse.Namespace(repo=repo, email=email, model=model, language=language, temperature=temperature, build=build)
         run_full_suite(args)
     except ValueError as ve:
@@ -133,7 +95,7 @@ def run_harnessgen(args):
     harness_gen.consolidate_harnesses(args.project)
 
 def run_ossfuzz(args):
-    if not project_exists(args.project):
+    if not os.path.exists(os.path.join(OSS_FUZZ_DIR, f"projects/{args.project}")):
         raise ValueError(f'Project {args.project} does not exist in OSS-Fuzz')
     log(f'Running OSS-Fuzz on {args.project}')
     oss_fuzz_hook.run_project(args.project)
@@ -141,33 +103,6 @@ def run_ossfuzz(args):
 def run_corpusgen(args):
     ##TODO
     log("Not Yet Implemented")
-
-def project_exists(project):
-    project_location = os.path.join(BASE_DIR, f"oss-fuzz/projects/{project}")
-    return os.path.exists(project_location)
-
-## Note that this will use a small amount of API credits if successful
-def validate_model(model, temperature):
-    ## Get API key
-    try:
-        client = openai.OpenAI(api_key=os.environ["OPENAI_API_KEY"])
-    except:
-        log('''Program execution failed: Missing OpenAI API Key.
-Make sure to export your API Key via the following command:
-   export OPENAI_API_KEY={your_api_key}''')
-        sys.exit(1)
-        
-    ## Check model
-    try:
-        response = client.responses.create(model=model, 
-                                           input="test", 
-                                           max_output_tokens=16,
-                                           temperature=temperature)
-    except Exception as e:
-        log(f'''Failed to generate test response. OpenAI API response:
-{e}''')
-        sys.exit(1)
-    return 
 
 def run_on_args():
     parser = argparse.ArgumentParser(
@@ -208,7 +143,7 @@ def run_on_args():
     te.set_defaults(func=run_template_gen)
 
     # Run only OSS-Fuzz-gen
-    pe = subparsers.add_parser('pre-existing', help='Run OSS-Fuzz-Gen on pre-existing project')
+    pe = subparsers.add_parser('existing', help='Run OSS-Fuzz-Gen on an existing project')
     pe.add_argument('--project', type=str, default='all', help='Project name')
     pe.add_argument('--model', type=str, default=DEFAULT_MODEL, help='OpenAI model name')
     pe.add_argument('--temperature', type=int, default=DEFAULT_TEMPERATURE, help='Temperature for OpenAI model')

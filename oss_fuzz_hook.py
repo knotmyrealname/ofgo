@@ -21,12 +21,9 @@ import subprocess
 import re
 
 from logger_config import setup_logger
+from helpers import BASE_DIR, OSS_FUZZ_DIR
 
-BASE_DIR = os.path.dirname(__file__)
-OSS_FUZZ_DIR = os.path.join(BASE_DIR, "oss-fuzz")
-
-logger = setup_logger(__name__)
-CONSOLIDATE_DIR = os.path.join(BASE_DIR, "gen-projects")
+logger = setup_logger()
 ## Purple
 def log(output):
     logger.info(f"\033[95moss_fuzz_hook:\033[00m {output}")
@@ -62,7 +59,7 @@ def run_project(project: str = None, harness_type: str = "existing"):
     # Build the project (same for both types)
     commands = [
         ["python3", path_to_helper, "pull_images"],
-        ["python3", path_to_helper, "build_image", project],
+        ["python3", path_to_helper, "build_image", project, "--pull"],
         ["python3", path_to_helper, "build_fuzzers", project]
     ]
     for c in commands:

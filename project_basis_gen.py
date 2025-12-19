@@ -33,41 +33,15 @@ import yaml
 import shutil
 import subprocess
 from logger_config import setup_logger
-
-# -------------------------------------------------------------------
-# Constants 
-# -------------------------------------------------------------------
-BASE_DIR = os.path.dirname(__file__)
-OSS_FUZZ_DIR = os.path.join(BASE_DIR, "oss-fuzz")
-OSS_FUZZ_GEN_DIR = os.path.join(BASE_DIR, "oss-fuzz-gen")
-GEN_PROJECTS_DIR = os.path.join(BASE_DIR, "gen-projects")
-DEFAULT_MODEL = "gpt-4o-mini"
+from helpers import *
 
 # -------------------------------------------------------------------
 # Logging functionality
 # -------------------------------------------------------------------
-logger = setup_logger(__name__)
+logger = setup_logger()
 def log(msg: str) -> None:
     logger.info(f"\033[94m{msg}\033[00m")
 
-# -------------------------------------------------------------------
-# Helper functions
-# -------------------------------------------------------------------
-def sanitize_repo_name(repo_url: str) -> str:
-    """Extracts an OSS-Fuzz project name (lowercase repo name)."""
-    name = os.path.basename(repo_url).replace(".git", "").strip().lower()
-    if not name:
-        raise ValueError(f"Could not parse repository name from URL: {repo_url}")
-    return name
-
-def clean_dir(path: str):
-    """Delete a directory/symlink if it exists."""
-    if os.path.islink(path):
-        os.unlink(path)
-    elif os.path.isdir(path):
-        shutil.rmtree(path)
-    elif os.path.exists(path):
-        os.unlink(path)
 
 # -------------------------------------------------------------------
 # Runner execution 
@@ -172,12 +146,12 @@ def generate_project_basis(repo_url: str, email: str, model: str = DEFAULT_MODEL
     
     # Create gen-projects dir if it does not exist
     log(f"[+] Starting OSS-Fuzz basis generation for {repo_name}")
-    if not os.path.exists(GEN_PROJECTS_DIR):
-        os.makedirs(GEN_PROJECTS_DIR)
+    if not os.path.exists(PERSISTENCE_DIR):
+        os.makedirs(PERSISTENCE_DIR)
 
 
     # gen-projects/<repo_name>
-    out_dir = os.path.join(GEN_PROJECTS_DIR, repo_name)
+    out_dir = os.path.join(PERSISTENCE_DIR, repo_name)
 
     # do not overwrite previous projects
     if os.path.exists(out_dir):
