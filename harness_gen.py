@@ -34,31 +34,18 @@ NUM_SAMPLES = 1 # Currently only supports 1
 RESULTS_DIR = os.path.join(BASE_DIR, "results")
 REPORT_DIR = os.path.join(BASE_DIR, "report")
 GENERATED_SAMPLES_DIR = os.path.join(PERSISTENCE_DIR, "SAMPLES")
-INTROSPECTOR_DIR = os.path.join(WORK_DIR, "fuzz-introspector")
 
-logger = logging.getLogger()
-
-## Dict of supported languages and their file extensions
-language_exts = {
-    'c': 'c',
-    'c++': 'cpp',
-    'go': 'go',
-    'javascript': 'js',
-    'jvm': 'java',
-    'python': 'py',
-    'ruby': 'rb',
-    'rust': 'rs',
-    'swift': 'swift'
-}
-
-## Cyan
-def log(output):
-    logger.info(f"\033[96mharness_gen:\033[00m {output}")
+logger = setup_logger(color_text(__name__, ANSI_CYAN))
+def log(msg):
+    logger.info(msg)
+def err(msg):
+    logger.error(color_text(msg, ANSI_RED))
+    sys.exit(1)
 
 def get_ext_from_project(project_dir: str) -> str:
     '''
     Determines the file extension for a project via the project language. If it detects
-    a language that is not supported, it immediately exits, logging to output.
+    a language that is not supported, it immediately exits, logging to msg.
 
     Args:
         project_dir (str): The path to the project
@@ -71,21 +58,18 @@ def get_ext_from_project(project_dir: str) -> str:
     '''
     project_yaml = os.path.join(project_dir, "project.yaml")
 
-    language = ""
-    with open(project_yaml, "r") as f:
+    language = ''
+    with open(project_yaml, 'r') as f:
         yaml_content = f.read().splitlines()
         for line in yaml_content:
-            if line.startswith("language:"):
-                language = line.split(":", 1)[1].strip()
+            if line.startswith('language:'):
+                language = line.split(':', 1)[1].strip()
 
-    if language in language_exts:
+    try:
+        check_language_support(language)
         return language_exts[language]
-    elif language is None or language == "":
-        log("Unable to identify language. Ensure your project.yaml is in oss-fuzz/projects and has a properly configured project.yaml.")
-        sys.exit(1)
-    else:
-        log(f"Language not supported: {language}.")
-        sys.exit(1)
+    except ValueError as ve:
+        err(f"ValueError: {ve}.\n Ensure your project.yaml is in oss-fuzz/projects and has a properly configured project.yaml.")
 
 def clean_old_harnesses(project_dir: str):
     '''
@@ -98,7 +82,7 @@ def clean_old_harnesses(project_dir: str):
         None
     '''
     log("Cleaning old harnesses")
-    old_fuzz_target_regex = fr"fuzz_harness-\d\d_\d\d.(.)*"
+    old_fuzz_target_regex = fr'fuzz_harness-\d\d_\d\d.(.)*'
     for root, dirs, files in os.walk(project_dir):
         for name in files:
             if re.match(old_fuzz_target_regex, name):
@@ -112,11 +96,10 @@ def setup_folder_syncing(project_dir: str, persistent_project_dir: str):
         log("Found pre-existing OSS-Fuzz project. Proceeding with Generation.")
         sync_dirs(project_dir, persistent_project_dir)
     else:
-        log(f"Cannot find Project folder at {project_dir} or any generated projects.")
-        sys.exit(1)
+        err(f"Cannot find Project folder at {project_dir} or any generated projects.")
 
 def cleanup_samples(samples_dir: str, project: str):
-    generated_project_regex = fr"{project}-.*-\d*"
+    generated_project_regex = fr'{project}-.*-\d*'
     for root, dirs, files in os.walk(samples_dir):
         for name in dirs:
             if re.match(generated_project_regex, name):
@@ -124,7 +107,7 @@ def cleanup_samples(samples_dir: str, project: str):
 
 
 def sync_samples(projects_dir, samples_dir, project) -> bool:
-    generated_project_regex = fr"{project}-.*-\d*"
+    generated_project_regex = fr'{project}-.*-\d*'
     found_output = False
     for root, dirs, files in os.walk(projects_dir):
         for name in dirs:
@@ -143,8 +126,7 @@ def validate_project(project_dir):
                 if name == item:
                     required_items.remove(item)
     if len(required_items) != 0:
-        log(f"Error: Project at {project_dir} missing either a project.yaml, Dockerfile, or build.sh. Please add the missing file.")
-        sys.exit(1)
+        err(f"Project at {project_dir} missing either a project.yaml, Dockerfile, or build.sh. Please add the missing file.")
 
 def generate_harness(model: str, project: str, temperature: float = main.DEFAULT_TEMPERATURE):
     '''
@@ -173,13 +155,11 @@ def generate_harness(model: str, project: str, temperature: float = main.DEFAULT
     clean_old_harnesses(project_dir)
     sync_dirs(project_dir, persistent_project_dir)
 
-    log(f'''Beginning OSS-Fuzz-gen harness generation. This may take a long time''')
+    log("Beginning OSS-Fuzz-gen harness generation. This may take a long time")
     start = time.time()
 
     ## Set up OSS-Fuzz-gen working directories
     ensure_dir_exists(WORK_DIR)
-    if not os.path.exists(INTROSPECTOR_DIR):
-        git.Repo.clone_from("https://github.com/ossf/fuzz-introspector", INTROSPECTOR_DIR)
     
     ## Runs OSS-Fuzz-gen with custom params
     script = os.path.join(SCRIPTS_DIR, "run-project-modified.sh")
@@ -210,8 +190,8 @@ def generate_harness(model: str, project: str, temperature: float = main.DEFAULT
         os.chdir(main.OSS_FUZZ_GEN_DIR)
         subprocess.run(["python","-m", "report.web", "-r", RESULTS_DIR, "-o", REPORT_DIR])
         log(f"Report Generated in {REPORT_DIR}")
-        log(f'''To view the report, either open up the index.html located within in your web browser or run the command:
-        python -m http.server -b 127.0.0.1 5000 -d {REPORT_DIR}''')
+        log(f"""To view the report, either open up the index.html located within in your web browser or run the command:
+        python -m http.server -b 127.0.0.1 5000 -d {REPORT_DIR}""")
         log("You may have to change the IP address (127.0.0.1) or port (5000) to suit your needs.")
         return True
     else: 
@@ -247,7 +227,7 @@ def consolidate_harnesses(project: str, sample_num: int = 1):
     file_ext = get_ext_from_project(project_dir)
 
     ## Tries to copy over generated files for a specific run sample
-    generated_project_regex = fr"{project}-.*-\d*"
+    generated_project_regex = fr'{project}-.*-\d*'
     num_found = 1
     for root, dirs, files in os.walk(GENERATED_SAMPLES_DIR):
         for name in dirs:

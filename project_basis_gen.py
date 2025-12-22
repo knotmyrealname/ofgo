@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
+'''
 project_basis_gen.py
 --------------------
 Creates the Dockerfile, project.yaml, build.sh, (and empty skeleton harnesses) for a given github repository and maintainer email
@@ -25,7 +25,7 @@ Usage:
 Notes:
     - Assumes you have followed the setup guide: USAGE.md
     - model defaults to 'gpt-4o-mini'
-"""
+'''
 
 import os
 import sys
@@ -38,24 +38,23 @@ from helpers import *
 # -------------------------------------------------------------------
 # Logging functionality
 # -------------------------------------------------------------------
-logger = setup_logger()
-def log(msg: str) -> None:
-    logger.info(f"\033[94m{msg}\033[00m")
-
+logger = setup_logger(color_text(__name__, ANSI_LIGHT_PURPLE))
+def log(msg):
+    logger.info(msg)
 
 # -------------------------------------------------------------------
 # Runner execution 
 # -------------------------------------------------------------------
 def run_runner(repo_url: str, repo_name: str, model: str) -> str:
-    """
-    Calls OSS-Fuzz-Gen’s experimental/build_generator/runner.py in agent mode
+    '''
+    Calls OSS-Fuzz-Gen's experimental/build_generator/runner.py in agent mode
     Return Value (path to generated files):
         OSS_FUZZ_GEN_DIR/generated-builds-tmp/oss-fuzz-projects/<repo_name>
-    """
+    '''
     
     # Runner command expects repo name as a text file "input.txt"
     input_path = os.path.join(OSS_FUZZ_GEN_DIR, "input.txt")
-    with open(input_path, "w") as f:
+    with open(input_path, 'w') as f:
         f.write(repo_url + "\n")
     
     # Get rid of previous temporary folder
@@ -110,7 +109,7 @@ def run_runner(repo_url: str, repo_name: str, model: str) -> str:
 # Copy and patch functions
 # -------------------------------------------------------------------
 def copy_outputs(src_dir: str, dst_dir: str) -> None:
-    """Entire entire project build dir to the dst directory."""
+    '''Entire entire project build dir to the dst directory.'''
     log(f"Copying files from {src_dir} to {dst_dir}")
 
     # dst_dir confirmed not to exist by main
@@ -120,14 +119,14 @@ def copy_outputs(src_dir: str, dst_dir: str) -> None:
     log(f"Copied: {files} to {dst_dir}")
 
 def patch_project_yaml(yaml_path: str, email: str) -> None:
-    """Update the maintainer email in project.yaml."""
+    '''Update the maintainer email in project.yaml.'''
     if not os.path.exists(yaml_path):
         log("project.yaml not found. skipping patch")
         return
-    with open(yaml_path, "r") as f:
+    with open(yaml_path, 'r') as f:
         y = yaml.safe_load(f) or {}
-    y["primary_contact"] = email
-    with open(yaml_path, "w") as f:
+    y['primary_contact'] = email
+    with open(yaml_path, 'w') as f:
         yaml.dump(y, f, sort_keys=False)
     log(f"Updated maintainer email to: {email}")
 
@@ -135,11 +134,11 @@ def patch_project_yaml(yaml_path: str, email: str) -> None:
 # Main workflow
 # -------------------------------------------------------------------
 def generate_project_basis(repo_url: str, email: str, model: str = DEFAULT_MODEL) -> str:
-    """
+    '''
     Calls function to generate the 3 basis files
     Copies the output out of oss-fuzz-gen and into out_dir.
     Patches the project.yaml with email as primary_contact
-    """
+    '''
     
     # Grab repo name
     repo_name = sanitize_repo_name(repo_url)

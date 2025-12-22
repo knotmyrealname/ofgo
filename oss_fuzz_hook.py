@@ -12,23 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
+'''
 OSS-Fuzz Runner
 Will run existing or newly generated OSS-Fuzz harnesses
-"""
+'''
 import os
 import subprocess
 import re
 
 from logger_config import setup_logger
-from helpers import BASE_DIR, OSS_FUZZ_DIR
+from helpers import BASE_DIR, OSS_FUZZ_DIR, color_text, ANSI_PURPLE
 
-logger = setup_logger()
-## Purple
-def log(output):
-    logger.info(f"\033[95moss_fuzz_hook:\033[00m {output}")
+logger = setup_logger(color_text(__name__, ANSI_PURPLE))
+def log(msg):
+    logger.info(msg)
 
-"""
+'''
 Runs OSS-Fuzz projects with either existing or generated harnesses
 
 Args:
@@ -36,22 +35,22 @@ Args:
     harness_type (str): Choose whether to run existing harness in oss-fuzz or generated harnesses. Default to "existing".
 
 Returns (bool): Success/Failure status 
-"""
+'''
 def run_project(project: str = None, harness_type: str = "existing"):
-    """
+    '''
     Run OSS-Fuzz project with specified harness type.
     
     Args:
         project: The project name
         harness_type: "existing" for standard OSS-Fuzz harnesses, 
                      "generated" for automatically generated harnesses
-    """
+    '''
     path_to_helper = os.path.join(OSS_FUZZ_DIR, "infra", "helper.py")
     
     if harness_type == "existing":
-        log(f"Running existing project {project} with OSS-FUZZ.")
+        log(f"Running existing project '{project}' with OSS-FUZZ.")
     elif harness_type == "generated":
-        log(f"Running generated project {project} with OSS-FUZZ.")
+        log(f"Running generated project '{project}' with OSS-FUZZ.")
     else:
         log(f"Error: Unknown harness_type '{harness_type}'. Use 'existing' or 'generated'.")
         return False
@@ -64,10 +63,7 @@ def run_project(project: str = None, harness_type: str = "existing"):
     ]
     for c in commands:
         log(f"Building images for {project}")
-        if c == ["python3", path_to_helper, "build_image", project]:
-            res = subprocess.run(c, input="y\n", text=True)
-        else:
-            res = subprocess.run(c)
+        res = subprocess.run(c)
         if res.returncode != 0:
             log(f"Error: {res.stderr}")
             return False

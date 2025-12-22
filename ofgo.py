@@ -27,138 +27,176 @@ from project_basis_gen import generate_project_basis
 from logger_config import setup_logger
 from helpers import *
 
-DEFAULT_BUILD = "TEMPLATE"
+DEFAULT_BUILD = 'template'
 
-logger = setup_logger(__name__)
-
-def log(output): ## Green rep
-    logger.info(f"\033[92moss_fuzz_gen_onboarding:\033[00m {output}")
+logger = setup_logger(color_text(__name__, ANSI_GREEN))
+def log(msg):
+    logger.info(msg)
+def err(msg):
+    logger.error(color_text(msg, ANSI_RED))
+    sys.exit(1)
+def warn(msg):
+    logger.warning(color_text(msg, ANSI_YELLOW))
 
 def run_interactive():
-    log('Running OFGO in interactive mode')
+    log("Running OFGO in interactive mode")
     try:
-        build = input(f'Enter build approach: AGENT/TEMPLATE (default: {DEFAULT_BUILD}): ').strip()
-        if build == '':
-            build = DEFAULT_BUILD 
-        repo = input('Enter project repo URL: ').strip()
-        email = input('Enter project maintainer email: ').strip()
-        language = input('Enter project language: ').strip()
-        check_email(email)
-        repo = sanitize_repo(repo)
-        model = input(f'Enter OpenAI model name (default: {DEFAULT_MODEL}): ').strip()
+        email = None
+        language = None
+        build = None
+        repo = input("Enter project repo URL or name: ").strip()
+        if '.' in repo: ## Assumes url if there's a period - no current oss-fuzz projects have a period
+            repo = sanitize_repo(repo)
+            project = validate_repo_url(repo)
+
+            build = input(f"Enter build approach: agent/template (default: {DEFAULT_BUILD}): ").strip()
+
+            language = input("Enter project language: ").strip()
+            check_language_support(language)
+                
+            while email is None:
+                try:
+                    email = input("Enter project maintainer email: ").strip()
+                    check_email(email)
+                except ValueError as ve:
+                    email = None
+                    log(f"Error: {ve}. Please reenter your email address.")
+        else: 
+            if project_exists(repo):
+                project = repo
+            else:
+                raise ValueError(f"Project does not exist with name '{repo}'. If you're trying to generate a project, provide an URL instead.")
+        model = input(f"Enter OpenAI model name (default: {DEFAULT_MODEL}): ").strip()
         if model == '':
             model = DEFAULT_MODEL
-        temp = input(f'Enter OpenAI model temperature (default: {DEFAULT_TEMPERATURE}): ').strip()
+        temp = input(f"Enter OpenAI model temperature (default: {DEFAULT_TEMPERATURE}): ").strip()
         if temp == '':
             temperature = DEFAULT_TEMPERATURE
         else:
             temperature = int(temp)
-        args = argparse.Namespace(repo=repo, email=email, model=model, language=language, temperature=temperature, build=build)
+        args = argparse.Namespace(repo=repo, project=project, email=email, model=model, language=language, temperature=temperature, build=build)
         run_full_suite(args)
     except ValueError as ve:
-        log(f'Error: {ve}')
-        sys.exit(1)
+        err(ve)
 
 def run_noninteractive(args):
-    log('Running OFGO fully')
+    log("Running OFGO fully")
     try:
-        check_email(args.email)
-        args.repo = sanitize_repo(args.repo)
+        if '.' in args.repo:
+            args.repo = sanitize_repo(args.repo)
+            args.project = validate_repo_url(args.repo)
+            check_language_support(args.language)
+            check_email(args.email)
+        else:
+            if project_exists(args.repo):
+                args.project = args.repo
+            else:
+                raise ValueError(f"Project does not exist with name '{args.repo}'. If you're trying to generate a project, provide an URL instead.")
+
         run_full_suite(args)
     except ValueError as ve:
-        log(f'Error: {ve}')
-        sys.exit(1)
+        err(ve)
 
 def run_full_suite(args):
-    if args.build == 'AGENT':
-        log("AGENT mode was chosen for build files")
-        run_basis_gen(args)
+    if '.' in args.repo:
+        if args.build == 'agent':
+            log("agent mode was chosen for build files")
+            run_basis_gen(args)
+        else:
+            log("template mode was chosen for build files (default)")
+            run_template_gen(args)
     else:
-        log("TEMPLATE mode was chosen for build files (default)")
-        run_template_gen(args)
-    args.project = sanitize_repo_name(args.repo)
+        log("No build necessary.")
+        check_project_compilation(args.project)
     run_harnessgen(args)
-    oss_fuzz_hook.run_project(args.project, "generated")
+    ## No need to run OSS-Fuzz directly as harness_gen already outputs coverage results
 
 def run_basis_gen(args):
-    log(f'Generating project structure with {args.repo}, {args.email}')
+    try:
+        print(SKIP_MODEL_CHECK)
+        validate_model(args.model, args.temperature)
+    except ValueError as ve:
+        err(ve)
+    log(f"Generating project structure with {args.repo}, {args.email}")
     repo_dir = generate_project_basis(args.repo, args.email, args.model)
 
 def run_template_gen(args):
-    log(f'Generating project with a template')
+    log(f"Generating project with a template")
     generate_from_templates(args.repo, args.email, args.language, args.model)
 
 def run_harnessgen(args):
-    validate_model(args.model, args.temperature)
-    log(f'Generating harness for {args.project}')
+    try:
+        validate_model(args.model, args.temperature)
+    except ValueError as ve:
+        err(ve)
+    log(f"Generating harness for {args.project}")
     harness_gen.generate_harness(args.model, args.project, args.temperature)
     harness_gen.consolidate_harnesses(args.project)
 
 def run_ossfuzz(args):
     if not os.path.exists(os.path.join(OSS_FUZZ_DIR, f"projects/{args.project}")):
-        raise ValueError(f'Project {args.project} does not exist in OSS-Fuzz')
-    log(f'Running OSS-Fuzz on {args.project}')
+        raise ValueError(f"Project '{args.project}' does not exist in OSS-Fuzz")
+    log(f"Running OSS-Fuzz on {args.project}")
     oss_fuzz_hook.run_project(args.project)
 
 def run_corpusgen(args):
     ##TODO
-    log("Not Yet Implemented")
+    warn("Corpus Generation not yet Implemented")
 
 def run_on_args():
     parser = argparse.ArgumentParser(
-        prog='ofgo',
-        description='Onboard project into OSS-Fuzz-Gen',
+        prog="ofgo",
+        description="Onboard project into OSS-Fuzz-Gen",
         add_help=False
     )
 
     # Global -h/--help flag
-    parser.add_argument('-h', '--help', action='store_true', help='Show this help message and exit')
+    parser.add_argument('-h', '--help', action='store_true', help="Show this help message and exit")
 
-    subparsers = parser.add_subparsers(dest='command', help='Available commands')
+    subparsers = parser.add_subparsers(dest='command', help="Available commands")
 
     # Run the full pipeline
-    ni = subparsers.add_parser('default', help='Full onboarding with harness and corpii generation')
-    ni.add_argument('--repo', type=str, help='Project repo URL')
-    ni.add_argument('--email', type=str, help='Project maintainer email')
-    ni.add_argument('--model', type=str, default=DEFAULT_MODEL, help='OpenAI model name')
-    ni.add_argument('--build', type=str, default=DEFAULT_BUILD, help='AGENT for experimental AI Agent build approach. Omit for simple Template approach')
-    ni.add_argument('--temperature', type=int, default=DEFAULT_TEMPERATURE, help='Temperature for OpenAI model')
-    ni.add_argument('--language', type=str, help='Programming language of project to fuzz')
+    ni = subparsers.add_parser('default', help="Full onboarding with harness and corpii generation (future feature)")
+    ni.add_argument('--repo', type=str, help="Project repo URL")
+    ni.add_argument('--email', type=str, help="Project maintainer email")
+    ni.add_argument('--model', type=str, default=DEFAULT_MODEL, help="OpenAI model name")
+    ni.add_argument('--build', type=str, default=DEFAULT_BUILD, help="'agent' for experimental AI Agent build approach. Omit for simple Template approach")
+    ni.add_argument('--temperature', type=int, default=DEFAULT_TEMPERATURE, help="Temperature for OpenAI model")
+    ni.add_argument('--language', type=str, help="Programming language of project to fuzz")
     ni.set_defaults(func=run_noninteractive)
 
-    # Run the only basis gen
-    ba = subparsers.add_parser('basis', help='Generate skeleton of the harness (project.yaml, build.sh, Dockerfile, empty-fuzzers) using OSS-Fuzz-Gen Build_Generator Agent Mode')
-    ba.add_argument('--repo', type=str, help='Project repo URL')
-    ba.add_argument('--email', type=str, help='Project maintainer email')
-    ba.add_argument('--model', type=str, default=DEFAULT_MODEL, help='OpenAI model name')
+    # Run only basis gen
+    ba = subparsers.add_parser('basis', help="Generate skeleton of the harness (project.yaml, build.sh, Dockerfile, empty-fuzzers) using OSS-Fuzz-Gen Build_Generator Agent Mode")
+    ba.add_argument('--repo', type=str, help="Project repo URL")
+    ba.add_argument('--email', type=str, help="Project maintainer email")
+    ba.add_argument('--model', type=str, default=DEFAULT_MODEL, help="OpenAI model name")
     ba.set_defaults(func=run_basis_gen)
 
-
-    # Run the only template gen
-    te = subparsers.add_parser('template', help='Uses static templates to generate skeleton of the harness (project.yaml, build.sh, Dockerfile, empty-fuzzer)')
-    te.add_argument('--repo', type=str, help='Project repo URL')
-    te.add_argument('--email', type=str, help='Project maintainer email')
-    te.add_argument('--language', type=str, help='Programming language of project to fuzz')
-    te.add_argument('--model', type=str, default=DEFAULT_MODEL, help='OpenAI model name')
+    # Run only template gen
+    te = subparsers.add_parser('template', help="Uses static templates to generate skeleton of the harness (project.yaml, build.sh, Dockerfile, empty-fuzzer)")
+    te.add_argument('--repo', type=str, help="Project repo URL")
+    te.add_argument('--email', type=str, help="Project maintainer email")
+    te.add_argument('--language', type=str, help="Programming language of project to fuzz")
+    te.add_argument('--model', type=str, default=DEFAULT_MODEL, help="OpenAI model name")
     te.set_defaults(func=run_template_gen)
 
     # Run only OSS-Fuzz-gen
-    pe = subparsers.add_parser('existing', help='Run OSS-Fuzz-Gen on an existing project')
-    pe.add_argument('--project', type=str, default='all', help='Project name')
-    pe.add_argument('--model', type=str, default=DEFAULT_MODEL, help='OpenAI model name')
-    pe.add_argument('--temperature', type=int, default=DEFAULT_TEMPERATURE, help='Temperature for OpenAI model')
+    pe = subparsers.add_parser('existing', help="Run OSS-Fuzz-Gen on an existing project")
+    pe.add_argument('--project', type=str, help="Project name")
+    pe.add_argument('--model', type=str, default=DEFAULT_MODEL, help="OpenAI model name")
+    pe.add_argument('--temperature', type=int, default=DEFAULT_TEMPERATURE, help="Temperature for OpenAI model")
     pe.set_defaults(func=run_harnessgen)
 
     # Run OSS-Fuzz
-    cv = subparsers.add_parser('coverage', help='Get coverage reports for project')
-    cv.add_argument('--project', type=str, default='all', help='Project name')
+    cv = subparsers.add_parser('coverage', help="Get coverage reports for project")
+    cv.add_argument('--project', type=str, help="Project name")
     cv.set_defaults(func=run_ossfuzz)
 
     # Run corpus generation
-    cg = subparsers.add_parser('corpus-gen', help='Generate corpora for a project')
-    cg.add_argument('--project', type=str, default='all', help='Project name')
-    cg.add_argument('--model', type=str, default=DEFAULT_MODEL, help='OpenAI model name')
-    cg.add_argument('--temperature', type=int, default=DEFAULT_TEMPERATURE, help='Temperature for OpenAI model')
+    cg = subparsers.add_parser('corpus-gen', help="Generate corpora for a project")
+    cg.add_argument('--project', type=str, help="Project name")
+    cg.add_argument('--model', type=str, default=DEFAULT_MODEL, help="OpenAI model name")
+    cg.add_argument('--temperature', type=int, default=DEFAULT_TEMPERATURE, help="Temperature for OpenAI model")
     cg.set_defaults(func=run_corpusgen)
 
     # Handle command arguments
@@ -172,8 +210,7 @@ def run_on_args():
     # Handle all options
     args = parser.parse_args(arguments)
     if args.command is None:
-        log("Error: No command provided. Use --help or -h for usage details.")
-        sys.exit(1)
+        err("No command provided. Use --help or -h for usage details.")
     args.func(args)
 
 def main():
@@ -182,5 +219,5 @@ def main():
     else :
         run_on_args()
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
