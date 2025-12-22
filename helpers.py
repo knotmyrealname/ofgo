@@ -30,7 +30,7 @@ DEFAULT_TEMPERATURE = 0.4
 SKIP_MODEL_CHECK = True if 'SKIP_MODEL_CHECK' in os.environ else False
 
 ## Dict of supported languages and their file extensions
-language_exts = {
+LANGUAGE_EXTS = {
     'c': 'c',
     'c++': 'cpp',
     'go': 'go',
@@ -54,20 +54,20 @@ ANSI_GRAY = 97
 def color_text(text: str, color: str):
     return f"\033[{color}m{text}\033[00m"
 
-def check_language_support(language: str):
-    if language in language_exts:
-        return
-    elif language is None or language == '':
-        raise ValueError("Unable to identify language.")
-    else:
-        raise ValueError(f"Language not supported: {language}.")
-
 helper_logger = setup_logger(color_text(__name__, ANSI_GREEN))
 def helper_log(msg):
     helper_logger.info(msg)
 def helper_err(msg):
     helper_logger.error(color_text(msg, ANSI_RED))
     sys.exit(1)
+
+def check_language_support(language: str):
+    if language in LANGUAGE_EXTS:
+        return
+    elif language is None or language == '':
+        raise ValueError("Unable to identify language.")
+    else:
+        raise ValueError(f"Language not supported: {language}.")
 
 def ensure_dir_exists(path: str):
     if not os.path.exists(path):

@@ -90,7 +90,7 @@ def create_new_project(repo_url: str, email: str, project_name: str, language: s
             f"python3 ofgo.py existing --project {project_name} --model <ai-model> --temperature <0-1>")
         
         ## Exits on the creation of a template as the user needs to update it.
-        warn(fr"WARNING: Make sure that you update the harness (indicated by fuzz_test.{language_exts[language]}) to be at least " +
+        warn(fr"WARNING: Make sure that you update the harness (indicated by fuzz_test.{LANGUAGE_EXTS[language]}) to be at least " +
             "a minimal fuzz harness - the Fuzz Introspector cannot do its job without some coverage, meaning no " +
             "functions can be selected for harness generation.")
 

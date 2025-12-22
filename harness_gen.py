@@ -67,7 +67,7 @@ def get_ext_from_project(project_dir: str) -> str:
 
     try:
         check_language_support(language)
-        return language_exts[language]
+        return LANGUAGE_EXTS[language]
     except ValueError as ve:
         err(f"ValueError: {ve}.\n Ensure your project.yaml is in oss-fuzz/projects and has a properly configured project.yaml.")
 
