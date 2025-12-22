@@ -1,3 +1,4 @@
+## Check the ddong2/cleanup branch for the latest code - it's overall more usable, but it's possible that there may still be broken code somewhere
 # OFGO: An Easy way to get Started with Fuzzing
 This collection of scripts serves as an entry into fuzzing with OSS-Fuzz, simplifying the whole process into one command line argument. We utilize existing functionality within OSS-Fuzz and OSS-Fuzz gen to make this happen to maximize compatibility, with some custom code to enable automatic corpus generation. Note that, although we will be generating fuzzing harnesses, you will still have to **manually** add them to OSS-Fuzz via a pull request.
 
