@@ -38,7 +38,16 @@ def err(msg):
 def warn(msg):
     logger.warning(color_text(msg, ANSI_YELLOW))
 
-def run_interactive():
+def run_interactive() -> None:
+    """Runs OFGO in interactive mode, prompting user for all necessary inputs.
+    
+    Interactively guides the user through the process of onboarding a project,
+    asking for a repository URL, build approach, language, email, model, and
+    temperature settings.
+
+    Raises:
+        SystemExit: If certain input validation loops fail.
+    """
     log("Running OFGO in interactive mode")
     try:
         email = None
@@ -79,7 +88,19 @@ def run_interactive():
     except ValueError as ve:
         err(ve)
 
-def run_noninteractive(args):
+def run_noninteractive(args: argparse.Namespace) -> None:
+    """Runs OFGO with command-line arguments (non-interactive mode).
+    
+    Processes the provided arguments to validate the project and execute
+    the full onboarding suite.
+
+    Args:
+        args: Parsed command-line arguments containing the repo, project, email,
+            language, model, temperature, and build settings.
+
+    Raises:
+        SystemExit: If any validation fails.
+    """
     log("Running OFGO fully")
     try:
         if '.' in args.repo:
@@ -97,7 +118,15 @@ def run_noninteractive(args):
     except ValueError as ve:
         err(ve)
 
-def run_full_suite(args):
+def run_full_suite(args: argparse.Namespace) -> None:
+    """Runs the complete OFGO onboarding suite.
+    
+    Executes the project basis generation, template generation, harness
+    generation, and compilation checks as needed based on the arguments.
+
+    Args:
+        args: Parsed command-line arguments with project configuration.
+    """
     if '.' in args.repo:
         if args.build == 'agent':
             log("agent mode was chosen for build files")
@@ -111,7 +140,18 @@ def run_full_suite(args):
     run_harnessgen(args)
     ## No need to run OSS-Fuzz directly as harness_gen already outputs coverage results
 
-def run_basis_gen(args):
+def run_basis_gen(args: argparse.Namespace) -> None:
+    """Generates project structure using an agent-based approach.
+    
+    Validates the model and temperature, then runs the project basis
+    generation to create project.yaml, build.sh, and Dockerfile.
+
+    Args:
+        args: Command-line arguments containing the repo, email, and model.
+
+    Raises:
+        SystemExit: If model validation fails.
+    """
     try:
         print(SKIP_MODEL_CHECK)
         validate_model(args.model, args.temperature)
@@ -120,11 +160,30 @@ def run_basis_gen(args):
     log(f"Generating project structure with {args.repo}, {args.email}")
     repo_dir = generate_project_basis(args.repo, args.email, args.model)
 
-def run_template_gen(args):
+def run_template_gen(args: argparse.Namespace) -> None:
+    """Generates project structure using static templates.
+    
+    Creates project.yaml, build.sh, and Dockerfile from templates
+    for the specified language.
+
+    Args:
+        args: Command-line arguments containing the repo, email, language, and model.
+    """
     log(f"Generating project with a template")
     generate_from_templates(args.repo, args.email, args.language, args.model)
 
-def run_harnessgen(args):
+def run_harnessgen(args: argparse.Namespace) -> None:
+    """Generates harnesses for a project and consolidates them.
+    
+    Validates the model and temperature, then generates fuzz harnesses
+    and consolidates them into a single directory.
+
+    Args:
+        args: Command-line arguments containing project, model, and temperature.
+
+    Raises:
+        SystemExit: If model validation fails.
+    """
     try:
         validate_model(args.model, args.temperature)
     except ValueError as ve:
@@ -133,18 +192,45 @@ def run_harnessgen(args):
     harness_gen.generate_harness(args.model, args.project, args.temperature)
     harness_gen.consolidate_harnesses(args.project)
 
-def run_ossfuzz(args):
+def run_ossfuzz(args: argparse.Namespace) -> None:
+    """Runs OSS-Fuzz on a project with its harnesses.
+    
+    Executes the OSS-Fuzz fuzzing pipeline on the specified project.
+
+    Args:
+        args: Command-line arguments containing the project name.
+
+    Raises:
+        SystemExit: If the project does not exist in OSS-Fuzz.
+    """
     if not os.path.exists(os.path.join(OSS_FUZZ_DIR, f"projects/{args.project}")):
         raise ValueError(f"Project '{args.project}' does not exist in OSS-Fuzz")
     log(f"Running OSS-Fuzz on {args.project}")
     oss_fuzz_hook.run_project(args.project)
 
-def run_corpusgen(args):
+def run_corpusgen(args: argparse.Namespace) -> None:
+    """Generates input corpus for a project (not yet implemented).
+    
+    Placeholder function for corpus generation functionality.
+
+    Args:
+        args: Command-line arguments containing the project name.
+
+    Note:
+        This feature is not yet implemented.
+    """
     ##TODO
     warn("Corpus Generation not yet Implemented")
 
-def run_on_args():
-    parser = argparse.ArgumentParser(
+def run_on_args() -> None:
+    """Parses and executes OFGO commands from command-line arguments.
+    
+    Sets up the argument parser with all available subcommands and executes
+    the appropriate function based on user input.
+
+    Raises:
+        SystemExit: If no command is provided or execution fails.
+    """
         prog="ofgo",
         description="Onboard project into OSS-Fuzz-Gen",
         add_help=False
@@ -213,7 +299,12 @@ def run_on_args():
         err("No command provided. Use --help or -h for usage details.")
     args.func(args)
 
-def main():
+def main() -> None:
+    """Main entry point for the OFGO application.
+    
+    Determines whether to run in interactive or command-line mode based on
+    the presence of arguments, then executes the appropriate mode.
+    """
     if len(sys.argv) == 1:
         run_interactive()
     else :

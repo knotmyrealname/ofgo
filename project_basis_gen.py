@@ -46,11 +46,22 @@ def log(msg):
 # Runner execution 
 # -------------------------------------------------------------------
 def run_runner(repo_url: str, repo_name: str, model: str) -> str:
-    '''
-    Calls OSS-Fuzz-Gen's experimental/build_generator/runner.py in agent mode
-    Return Value (path to generated files):
-        OSS_FUZZ_GEN_DIR/generated-builds-tmp/oss-fuzz-projects/<repo_name>
-    '''
+    """Calls OSS-Fuzz-Gen's build generator to create project configuration files.
+    
+    Invokes the experimental build_generator runner to generate project basis
+    files (project.yaml, build.sh, Dockerfile) using the specified model.
+
+    Args:
+        repo_url (str): The repository URL to generate files for.
+        repo_name (str): The sanitized project name from the repository.
+        model (str): The LLM model to use for generation.
+
+    Returns:
+        str: Path to the generated project directory.
+
+    Raises:
+        RuntimeError: If the generator fails or produces no output.
+    """
     
     # Runner command expects repo name as a text file "input.txt"
     input_path = os.path.join(OSS_FUZZ_GEN_DIR, "input.txt")
@@ -109,7 +120,12 @@ def run_runner(repo_url: str, repo_name: str, model: str) -> str:
 # Copy and patch functions
 # -------------------------------------------------------------------
 def copy_outputs(src_dir: str, dst_dir: str) -> None:
-    '''Entire entire project build dir to the dst directory.'''
+    """Copies the entire generated project directory to the destination.
+
+    Args:
+        src_dir (str): Path to the source directory to copy from.
+        dst_dir (str): Path to the destination directory to copy to.
+    """
     log(f"Copying files from {src_dir} to {dst_dir}")
 
     # dst_dir confirmed not to exist by main
@@ -119,7 +135,12 @@ def copy_outputs(src_dir: str, dst_dir: str) -> None:
     log(f"Copied: {files} to {dst_dir}")
 
 def patch_project_yaml(yaml_path: str, email: str) -> None:
-    '''Update the maintainer email in project.yaml.'''
+    """Updates the maintainer email in project.yaml.
+
+    Args:
+        yaml_path (str): Path to the project.yaml file.
+        email (str): The email address to set as primary contact.
+    """
     if not os.path.exists(yaml_path):
         log("project.yaml not found. skipping patch")
         return
@@ -134,11 +155,20 @@ def patch_project_yaml(yaml_path: str, email: str) -> None:
 # Main workflow
 # -------------------------------------------------------------------
 def generate_project_basis(repo_url: str, email: str, model: str = DEFAULT_MODEL) -> str:
-    '''
-    Calls function to generate the 3 basis files
-    Copies the output out of oss-fuzz-gen and into out_dir.
-    Patches the project.yaml with email as primary_contact
-    '''
+    """Generates project basis files (project.yaml, build.sh, Dockerfile).
+    
+    Calls the OSS-Fuzz-Gen build generator to create project configuration
+    files, then copies the output to the persistence directory and patches
+    the project.yaml with the provided email.
+
+    Args:
+        repo_url (str): The repository URL to generate files for.
+        email (str): The maintainer email to include in project.yaml.
+        model (str): The LLM model to use. Defaults to DEFAULT_MODEL.
+
+    Returns:
+        str: Path to the generated project directory.
+    """
     
     # Grab repo name
     repo_name = sanitize_repo_name(repo_url)

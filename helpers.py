@@ -61,7 +61,15 @@ def helper_err(msg):
     helper_logger.error(color_text(msg, ANSI_RED))
     sys.exit(1)
 
-def check_language_support(language: str):
+def check_language_support(language: str) -> None:
+    """Verifies that a programming language is supported.
+
+    Args:
+        language (str): The programming language to check.
+
+    Raises:
+        ValueError: If the language is None, empty, or not supported.
+    """
     if language in LANGUAGE_EXTS:
         return
     elif language is None or language == '':
@@ -69,20 +77,37 @@ def check_language_support(language: str):
     else:
         raise ValueError(f"Language not supported: {language}.")
 
-def ensure_dir_exists(path: str):
+def ensure_dir_exists(path: str) -> None:
+    """Creates a directory if it does not already exist.
+
+    Args:
+        path (str): The directory path to create.
+    """
     if not os.path.exists(path):
         os.makedirs(path)
 
-def sync_dirs(src_dir, dest_dir):
-    '''
-    Syncs two directories by deleting dest_dir (if it exists) and copying over src_dir
-    '''
+def sync_dirs(src_dir: str, dest_dir: str) -> None:
+    """Syncs two directories by replacing the destination with the source.
+    Not super efficient, but it's more reliable than symlinks and is fine at
+    our file sizes.
+    
+    Deletes the destination directory (if it exists) and copies the source
+    directory to the destination location.
+
+    Args:
+        src_dir (str): The source directory path to copy from.
+        dest_dir (str): The destination directory path to replace.
+    """
     if os.path.exists(dest_dir):
         shutil.rmtree(dest_dir)
     shutil.copytree(src_dir, dest_dir)
 
-def clean_dir(path: str):
-    '''Delete a directory/symlink if it exists.'''
+def clean_dir(path: str) -> None:
+    """Deletes a directory, symlink, or file if it exists.
+
+    Args:
+        path (str): The path to the directory, symlink, or file to delete.
+    """
     if os.path.islink(path):
         os.unlink(path)
     elif os.path.isdir(path):
@@ -90,14 +115,33 @@ def clean_dir(path: str):
     elif os.path.exists(path):
         os.unlink(path)
     
-def project_exists(project: str):
+def project_exists(project: str) -> bool:
+    """Checks if a project exists in either the persistence or OSS-Fuzz directory.
+
+    Args:
+        project (str): The project name to check for.
+
+    Returns:
+        bool: True if the project exists in either location, False otherwise.
+    """
     persistent_project = os.path.join(PERSISTENCE_DIR, project)
     oss_fuzz_project = os.path.join(OSS_FUZZ_PROJECTS_DIR, project)
     if os.path.isdir(persistent_project) or os.path.isdir(oss_fuzz_project):
         return True
     return False
 
-def check_email(email):
+def check_email(email: str) -> str:
+    """Validates and returns an email address.
+
+    Args:
+        email (str): The email address to validate.
+
+    Returns:
+        str: A safe and validated version of the email address.
+
+    Raises:
+        ValueError: If the email format is invalid.
+    """
     regex = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
     if not bool(re.fullmatch(regex, email)):
         raise ValueError(f"Invalid email")
@@ -108,7 +152,21 @@ def check_email(email):
         raise ValueError(f"Invalid email") from e
 
 def validate_repo_url(url: str) -> str:
-    ## Check to make sure repo is valid
+    """Validates and clones a repository from a given URL.
+    
+    Checks that the URL is valid, then clones it to a temporary directory
+    to verify it's accessible.
+
+    Args:
+        url (str): The repository URL to validate.
+
+    Returns:
+        str: The sanitized project name extracted from the repository.
+
+    Raises:
+        ValueError: If the URL is invalid or cannot be cloned.
+    """
+    ## Check to make sure repo is valid and safe before attempting to download
     project_name = sanitize_repo_name(url)
     try:
         project_repo_dir = os.path.join(GIT_REPO_DIR, project_name)
@@ -119,26 +177,66 @@ def validate_repo_url(url: str) -> str:
     except git.exc.GitError as e:
         raise ValueError(f"ERROR! Couldn't pull from {url}: \n{e}")
 
-def sanitize_repo(url):
+def sanitize_repo(url: str) -> str:
+    """Sanitizes a repository URL to ensure it's valid and safe.
+    
+    Validates that the URL is HTTPS, points to GitHub or GitLab, and is
+    properly formatted.
+
+    Args:
+        url (str): The repository URL to sanitize.
+
+    Returns:
+        str: A shell-quoted version of the URL.
+
+    Raises:
+        ValueError: If the URL format is invalid, not HTTPS, or not from
+            GitHub/GitLab. This may need to be updated in the future to extend support.
+    """
     regex = re.compile(r'https?://[^\s/$.?#].[^\s]*')
     if not bool(regex.fullmatch(url)):
         raise ValueError(f"Not a valid URL")
     parsed = urlparse(url)
     if not parsed.netloc.endswith('github.com') and not parsed.netloc.endswith('gitlab.com'):
-        raise ValueError(f"URL {url} not GitHub or GitLab")
+        raise ValueError(f"URL {url} not GitHub or GitLab. To add support for other Git services, please file a Github issue on our repository.")
     if parsed.scheme != 'https':
         raise ValueError(f"URL {url} not HTTPS")
     return shlex.quote(url)
 
 def sanitize_repo_name(repo_url: str) -> str:
-    '''Extracts an OSS-Fuzz project name (lowercase repo name).'''
+    """Extracts an OSS-Fuzz project name from a repository URL.
+    
+    Converts the repository name to lowercase and removes .git suffix.
+
+    Args:
+        repo_url (str): The repository URL to extract the project name from.
+
+    Returns:
+        str: The sanitized project name in lowercase.
+
+    Raises:
+        ValueError: If the project name cannot be parsed from the URL.
+    """
     name = os.path.basename(repo_url).replace('.git', '').strip().lower()
     if not name:
         raise ValueError(f"Could not parse repository name from URL: {repo_url}")
     return name
 
 ## Note that this will use a small amount of API credits if successful
-def validate_model(model, temperature):
+def validate_model(model: str, temperature: float) -> None:
+    """Validates that a model and cooresponding temperature settings are valid.
+    
+    Currently only supports OpenAI models - Sends a test request to the OpenAI API 
+    to verify the model is accessible and the temperature is valid. This can be
+    turned off by modifying SKIP_MODEL_CHECK to be True.
+
+    Args:
+        model (str): The model name to validate.
+        temperature (float): The temperature setting to validate.
+
+    Raises:
+        ValueError: If the API key is missing, invalid, or the model fails to respond.
+    """
     global SKIP_MODEL_CHECK
     if SKIP_MODEL_CHECK: return
     ## Get API key
@@ -158,6 +256,7 @@ Make sure to export your API Key via the following command:
     except Exception as e:
         raise ValueError(f"""Failed to generate test response. OpenAI API response:
 {e}""")
+    ## We only need to check the model params once
     SKIP_MODEL_CHECK = True
     return 
 

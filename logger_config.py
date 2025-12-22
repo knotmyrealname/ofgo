@@ -15,21 +15,18 @@
 import logging
 import sys
 
-def setup_logger(name: str = "", level: int = logging.INFO) -> logging.Logger:
-    """
-    Sets up a consistent logger for the entire project.
+def setup_logger(name: str, level: int = logging.INFO) -> logging.Logger:
+    """Sets up a consistent logger for the entire project.
 
-    - Configures the root logger once (first import).
-    - Subsequent calls reuse the same configuration.
-    - Prevents duplicate handlers.
-    - Each module can call this safely: logger = setup_logger(__name__)
+    Configures the root logger once on first import, preventing duplicate
+    handlers. Each module can safely call this function multiple times.
 
     Args:
-        name: The name for the logger (usually __name__).
-        level: Logging level (default: INFO).
+        name (str): The logger name (usually __name__). Defaults to empty string.
+        level (int): The logging level to set. Defaults to logging.INFO.
 
     Returns:
-        logging.Logger: Configured logger instance.
+        logging.Logger: A configured logger instance.
     """
     logger = logging.getLogger(name)
 

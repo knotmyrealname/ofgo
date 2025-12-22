@@ -43,19 +43,20 @@ def err(msg):
     sys.exit(1)
 
 def get_ext_from_project(project_dir: str) -> str:
-    '''
-    Determines the file extension for a project via the project language. If it detects
-    a language that is not supported, it immediately exits, logging to msg.
+    """Determines the file extension for a project based on its language.
+    
+    Reads the project.yaml file to identify the language and returns the
+    corresponding file extension. If the language is unsupported, exits with error.
 
     Args:
-        project_dir (str): The path to the project
+        project_dir (str): Path to the project directory.
     
     Returns:
-        str: file extension expected for the language
+        str: The file extension corresponding to the project's language.
 
     Raises:
-        SystemExit : If the language cannot be identified or is not supported
-    '''
+        SystemExit: If the language cannot be identified or is not supported.
+    """
     project_yaml = os.path.join(project_dir, "project.yaml")
 
     language = ''
@@ -71,16 +72,15 @@ def get_ext_from_project(project_dir: str) -> str:
     except ValueError as ve:
         err(f"ValueError: {ve}.\n Ensure your project.yaml is in oss-fuzz/projects and has a properly configured project.yaml.")
 
-def clean_old_harnesses(project_dir: str):
-    '''
-    Removes generated harnesses for a given project
+def clean_old_harnesses(project_dir: str) -> None:
+    """Removes old generated harnesses for a given project.
+    
+    Searches for and deletes files matching the pattern 'fuzz_harness-DD_DD.*'
+    where DD represents digits.
 
     Args:
-        project_dir (str): The path to the project to clean up
-    
-    Returns:
-        None
-    '''
+        project_dir (str): Path to the project directory to clean up.
+    """
     log("Cleaning old harnesses")
     old_fuzz_target_regex = fr'fuzz_harness-\d\d_\d\d.(.)*'
     for root, dirs, files in os.walk(project_dir):
@@ -88,17 +88,38 @@ def clean_old_harnesses(project_dir: str):
             if re.match(old_fuzz_target_regex, name):
                 os.remove(os.path.join(project_dir, name))
 
-def setup_folder_syncing(project_dir: str, persistent_project_dir: str):
-    if os.path.exists(persistent_project_dir): ## Prioritize our generated projects over existing projects
-        log("Found OFGO-Generated project. Proceeding with Generation.")
-        sync_dirs(persistent_project_dir, project_dir)
-    elif os.path.exists(project_dir):
-        log("Found pre-existing OSS-Fuzz project. Proceeding with Generation.")
-        sync_dirs(project_dir, persistent_project_dir)
-    else:
-        err(f"Cannot find Project folder at {project_dir} or any generated projects.")
+def setup_folder_syncing(priority_project_dir: str, secondary_project_dir: str) -> None:
+    """Sets up folder syncing between two directories.
+    
+    Prioritizes syncing the first directory to the secondary directory if it exists. 
+    If it doesn't, it tries syncing the secondary directory to the first. This ensures
+    that the project folders are up to date.
 
-def cleanup_samples(samples_dir: str, project: str):
+    Args:
+        priority_project_dir (str): Path to the prioritized project directory (usually OFGO-generated).
+        secondary_project_dir (str): Path to the secondary project directory (usually OSS-Fuzz).
+    
+    Raises:
+        SystemExit: If neither directory exists.
+    """
+    if os.path.exists(priority_project_dir): ## Prioritize our generated projects over existing projects
+        log("Found OFGO-Generated project. Proceeding with Generation.")
+        sync_dirs(priority_project_dir, secondary_project_dir)
+    elif os.path.exists(secondary_project_dir):
+        log("Found pre-existing OSS-Fuzz project. Proceeding with Generation.")
+        sync_dirs(secondary_project_dir, priority_project_dir)
+    else:
+        err(f"Cannot find Project folder at {secondary_project_dir} or any generated projects.")
+
+def cleanup_samples(samples_dir: str, project: str) -> None:
+    """Removes generated sample directories for a given project.
+    
+    Searches for and deletes directories matching the pattern 'project-.*-\\d*'.
+
+    Args:
+        samples_dir (str): Path to the samples directory.
+        project (str): Name of the project to clean up samples for.
+    """
     generated_project_regex = fr'{project}-.*-\d*'
     for root, dirs, files in os.walk(samples_dir):
         for name in dirs:
@@ -106,7 +127,20 @@ def cleanup_samples(samples_dir: str, project: str):
                 shutil.rmtree(os.path.join(samples_dir, name))
 
 
-def sync_samples(projects_dir, samples_dir, project) -> bool:
+def sync_samples(projects_dir: str, samples_dir: str, project: str) -> bool:
+    """Syncs generated harness samples to the samples directory.
+    
+    Searches for directories matching the pattern 'project-.*-\\d*' in the OSS-Fuzz
+    projects directory and syncs them to the samples directory.
+
+    Args:
+        projects_dir (str): Path to the projects directory.
+        samples_dir (str): Path to the samples directory.
+        project (str): Name of the project.
+    
+    Returns:
+        bool: True if output was found and synced, False otherwise.
+    """
     generated_project_regex = fr'{project}-.*-\d*'
     found_output = False
     for root, dirs, files in os.walk(projects_dir):
@@ -118,7 +152,17 @@ def sync_samples(projects_dir, samples_dir, project) -> bool:
                 sync_dirs(harness_dir, target_dir)
     return found_output
 
-def validate_project(project_dir):
+def validate_project(project_dir: str) -> None:
+    """Validates that a project directory contains required files.
+    
+    Checks that the project directory contains a build.sh, project.yaml, and Dockerfile.
+
+    Args:
+        project_dir (str): Path to the project directory to validate.
+    
+    Raises:
+        SystemExit: If any required files are missing.
+    """
     required_items = ["build.sh", "project.yaml", "Dockerfile"]
     for root, dirs, files in os.walk(project_dir):
         for name in files:
@@ -128,25 +172,28 @@ def validate_project(project_dir):
     if len(required_items) != 0:
         err(f"Project at {project_dir} missing either a project.yaml, Dockerfile, or build.sh. Please add the missing file.")
 
-def generate_harness(model: str, project: str, temperature: float = main.DEFAULT_TEMPERATURE):
-    '''
-    Generates OSS-Fuzz-gen harnesses for a given project using a specified model and temperature.
+def generate_harness(model: str, project: str, temperature: float = DEFAULT_TEMPERATURE) -> bool:
+    """Generates OSS-Fuzz-gen harnesses for a given project.
+    
+    Uses the specified LLM model and temperature to generate fuzz harnesses.
+    Manages project directories, runs the generation pipeline, and syncs results
+    to the persistent samples (gen-projects) directory.
 
     Args:
-        model (str): The llm model to use for harness generation.
-        project (str): The project to generate harnesses for. Expects the file to be at ofgo/
-        temperature (float, optional): The temperature setting for the model. Defaults to 0.4.
+        model (str): The LLM model to use for harness generation.
+        project (str): The project name (expects project folder to either be in 'ofgo/gen-projects' 
+            or 'ofgo/oss-fuzz/projects').
+        temperature (str): The temperature setting for the model. Defaults to DEFAULT_TEMPERATURE.
 
     Returns:
-        bool: True if successful, False if unsuccessful
-    ''' 
-    
+        bool: True if harness generation succeeded, False otherwise.
+    """ 
     ## Sets up synced folders for persistence
     persistent_project_dir = os.path.join(PERSISTENCE_DIR, project)
     project_dir = os.path.join(OSS_FUZZ_PROJECTS_DIR, project)
 
     ensure_dir_exists(GENERATED_SAMPLES_DIR)
-    setup_folder_syncing(project_dir, persistent_project_dir)
+    setup_folder_syncing(persistent_project_dir, project_dir)
     validate_project(persistent_project_dir)
         
     ## Cleans up samples - OSS-Fuzz-gen already cleans up OSS-Fuzz/projects
@@ -200,18 +247,16 @@ def generate_harness(model: str, project: str, temperature: float = main.DEFAULT
 
     
 
-def consolidate_harnesses(project: str, sample_num: int = 1):
-    '''
-    Retrieves generated harnesses for a given project and consolidates them into a single directory (gen-projects) outside of oss-fuzz.
+def consolidate_harnesses(project: str, sample_num: int = 1) -> None:
+    """Consolidates generated harnesses into a single directory.
+    
+    Retrieves generated harnesses for a project and consolidates them into
+    the gen-projects directory outside of oss-fuzz.
 
     Args:
-        project (str): The OSS-Fuzz project to consolidate generated harnesses for.
-        sample_num (int, optional): The sample number to consolidate. Defaults to 1.
-
-    Returns:
-        None
-    '''
-
+        project (str): The OSS-Fuzz project name to consolidate harnesses for.
+        sample_num (int): The sample number to consolidate. Defaults to 1.
+    """
     ## Check if the project exists
     project_dir = os.path.join(OSS_FUZZ_PROJECTS_DIR, project)
     if not os.path.exists(project_dir):

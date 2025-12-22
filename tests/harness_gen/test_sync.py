@@ -25,7 +25,7 @@ def _cleanup():
 
 def test_setup_folder_syncing_generated_nopreexisting():
     _write_string_to_file(GEN_PROJECT_DIR, "generated", "generated")
-    setup_folder_syncing(PROJECT_DIR, GEN_PROJECT_DIR)
+    setup_folder_syncing(GEN_PROJECT_DIR, PROJECT_DIR)
     assert filecmp.cmp(os.path.join(PROJECT_DIR, "generated"), os.path.join(GEN_PROJECT_DIR, "generated"))
     _write_string_to_file(PYCACHE_DIR, "generated", "generated")
     assert filecmp.cmp(os.path.join(PROJECT_DIR, "generated"), os.path.join(PYCACHE_DIR, "generated"))
@@ -35,7 +35,7 @@ def test_setup_folder_syncing_generated_nopreexisting():
 def test_setup_folder_syncing_generated_preexisting():
     _write_string_to_file(GEN_PROJECT_DIR, "generated", "generated")
     _write_string_to_file(PROJECT_DIR, "preexisting", "preexisting")
-    setup_folder_syncing(PROJECT_DIR, GEN_PROJECT_DIR)
+    setup_folder_syncing(GEN_PROJECT_DIR, PROJECT_DIR)
     assert filecmp.cmp(os.path.join(PROJECT_DIR, "generated"), os.path.join(GEN_PROJECT_DIR, "generated"))
     _write_string_to_file(PYCACHE_DIR, "generated", "generated")
     assert filecmp.cmp(os.path.join(PROJECT_DIR, "generated"), os.path.join(PYCACHE_DIR, "generated"))
@@ -43,7 +43,7 @@ def test_setup_folder_syncing_generated_preexisting():
 
 def test_setup_folder_syncing_nogenerated_preexisting():
     _write_string_to_file(PROJECT_DIR, "preexisting", "preexisting")
-    setup_folder_syncing(PROJECT_DIR, GEN_PROJECT_DIR)
+    setup_folder_syncing(GEN_PROJECT_DIR, PROJECT_DIR)
     assert filecmp.cmp(os.path.join(PROJECT_DIR, "preexisting"), os.path.join(GEN_PROJECT_DIR, "preexisting"))
     _write_string_to_file(PYCACHE_DIR, "preexisting", "preexisting")
     assert filecmp.cmp(os.path.join(PROJECT_DIR, "preexisting"), os.path.join(PYCACHE_DIR, "preexisting"))
@@ -51,7 +51,7 @@ def test_setup_folder_syncing_nogenerated_preexisting():
 
 def test_setup_folder_syncing_nogenerated_nopreexisting():
     with pytest.raises(SystemExit):
-        setup_folder_syncing(PROJECT_DIR, GEN_PROJECT_DIR)
+        setup_folder_syncing(GEN_PROJECT_DIR, PROJECT_DIR)
     _cleanup()
 
 def _setup_samples():

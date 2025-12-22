@@ -20,7 +20,22 @@ def err(msg):
 def warn(msg):
     logger.warning(color_text(msg, ANSI_YELLOW))
 
-def generate_from_templates(repo_url: str, email: str, language: str, model: str):
+def generate_from_templates(repo_url: str, email: str, language: str, model: str) -> None:
+    """Generates project configuration files from language templates.
+    
+    Clones the repository, and checks for existing projects. If there is an 
+    existing project, it tests it and moves on. If there is not an existing project,
+    a new one is created from a template.
+
+    Args:
+        repo_url (str): The repository URL to generate files for.
+        email (str): The maintainer email to include in project.yaml.
+        language (str): The programming language of the project.
+        model (str): The LLM model name (stored but not used in template generation).
+
+    Raises:
+        SystemExit: If language templates don't exist or generation fails.
+    """
     log("Generating Config Files from Template")
     ## Set up working directories
     ensure_dir_exists(GIT_REPO_DIR)
@@ -36,7 +51,21 @@ def generate_from_templates(repo_url: str, email: str, language: str, model: str
     else:
         create_new_project(repo_url, email, project_name, language)
 
-def create_new_project(repo_url: str, email: str, project_name: str, language: str):
+def create_new_project(repo_url: str, email: str, project_name: str, language: str) -> None:
+    """Creates a new OSS-Fuzz project from language templates.
+    
+    Copies template files for the specified language, fills in variable placeholders
+    with project-specific information, and updates configuration files.
+
+    Args:
+        repo_url (str): The repository URL to include in configuration files.
+        email (str): The maintainer email to include in project.yaml.
+        project_name (str): The name of the project.
+        language (str): The programming language (determines which templates to use).
+
+    Raises:
+        SystemExit: If templates don't exist, are incomplete, or file updates fail.
+    """
     persistent_project_dir = os.path.join(PERSISTENCE_DIR, project_name)
     project_dir = os.path.join(OSS_FUZZ_DIR, "projects", project_name)
     
@@ -84,6 +113,16 @@ def create_new_project(repo_url: str, email: str, project_name: str, language: s
         build = file.read_text()
         build = build.replace('{year}', current_year)
         file.write_text(build)
+
+        ## Fill out fuzzing harness
+        harness_name = "fuzz_test." + LANGUAGE_EXTS[language]
+        harness_template = os.path.join(persistent_project_dir, harness_name)
+        if not os.path.exists(build_template):
+            log(f"{harness_path} does not exist in {template}. Skipping.")
+        file = Path(harness_template)
+        harness = file.read_text()
+        harness = harness.replace('{year}', current_year)
+        file.write_text(harness)
             
         warn("Project Config Generated. Warning: Some Config files may require further editing to be functional. This is especially true for " + 
             "projects that have many dependency requirements. After updating the config, either rerun TEMPLATE gen with the same parameters or run \n    " + 

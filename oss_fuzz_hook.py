@@ -27,24 +27,21 @@ logger = setup_logger(color_text(__name__, ANSI_PURPLE))
 def log(msg):
     logger.info(msg)
 
-'''
-Runs OSS-Fuzz projects with either existing or generated harnesses
-
-Args:
-    project (str): Name of the project to run with oss-fuzz. Required.
-    harness_type (str): Choose whether to run existing harness in oss-fuzz or generated harnesses. Default to "existing".
-
-Returns (bool): Success/Failure status 
-'''
-def run_project(project: str = None, harness_type: str = "existing"):
-    '''
-    Run OSS-Fuzz project with specified harness type.
+def run_project(project: str = None, harness_type: str = "existing") -> bool:
+    """Runs an OSS-Fuzz project with specified harness type.
     
+    Builds the project, identifies harnesses based on the specified type
+    (existing or generated), and runs each fuzzer with predefined parameters.
+
     Args:
-        project: The project name
-        harness_type: "existing" for standard OSS-Fuzz harnesses, 
-                     "generated" for automatically generated harnesses
-    '''
+        project: The project name to run with OSS-Fuzz.
+        harness_type: Type of harnesses to run. Must be "existing" for standard
+            OSS-Fuzz harnesses or "generated" for automatically generated ones.
+            Defaults to "existing".
+
+    Returns:
+        True if the project ran successfully, False otherwise.
+    """
     path_to_helper = os.path.join(OSS_FUZZ_DIR, "infra", "helper.py")
     
     if harness_type == "existing":
