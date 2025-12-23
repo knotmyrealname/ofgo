@@ -16,13 +16,10 @@ import sys
 import os
 import re
 import argparse
-import logging
-import shutil
-
 
 import harness_gen
 import oss_fuzz_hook
-from project_template_gen import generate_from_templates, sanitize_repo_name
+from project_template_gen import generate_from_templates
 from project_basis_gen import generate_project_basis
 from logger_config import setup_logger
 from helpers import *
@@ -231,6 +228,7 @@ def run_on_args() -> None:
     Raises:
         SystemExit: If no command is provided or execution fails.
     """
+    parser = argparse.ArgumentParser(
         prog="ofgo",
         description="Onboard project into OSS-Fuzz-Gen",
         add_help=False

@@ -28,7 +28,6 @@ Notes:
 '''
 
 import os
-import sys
 import yaml
 import shutil
 import subprocess

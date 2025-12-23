@@ -15,16 +15,12 @@
 import sys
 import os
 import re
-import logging
 import time
-import stat
-import git
 import subprocess
 import shutil
 
 sys.path.insert(0, "./oss-fuzz-gen")
 import run_all_experiments
-import ofgo as main
 from helpers import *
 
 ## Variable declaration
@@ -212,8 +208,8 @@ def generate_harness(model: str, project: str, temperature: float = DEFAULT_TEMP
     script = os.path.join(SCRIPTS_DIR, "run-project-modified.sh")
     subprocess.run(["chmod", "+x", script])
     subprocess.run([script,
-                   main.OSS_FUZZ_GEN_DIR,
-                   main.OSS_FUZZ_DIR,
+                   OSS_FUZZ_GEN_DIR,
+                   OSS_FUZZ_DIR,
                    INTROSPECTOR_DIR,
                    BENCHMARK_HEURISTICS,
                    project,
@@ -234,7 +230,7 @@ def generate_harness(model: str, project: str, temperature: float = DEFAULT_TEMP
                     "as XX.fuzz_target. To use them, you can move them to your main folder and rename them.")
 
         ## Get report from OSS-Fuzz-gen run
-        os.chdir(main.OSS_FUZZ_GEN_DIR)
+        os.chdir(OSS_FUZZ_GEN_DIR)
         subprocess.run(["python","-m", "report.web", "-r", RESULTS_DIR, "-o", REPORT_DIR])
         log(f"Report Generated in {REPORT_DIR}")
         log(f"""To view the report, either open up the index.html located within in your web browser or run the command:
