@@ -26,8 +26,6 @@ OSS_FUZZ_GEN_MODEL=${8}
 TEMPERATURE=${9}
 WORK_DIR=${10}
 
-
-
 # Specifify OSS-Fuzz-gen to not clean up the OSS-Fuzz project. Enabling
 # this will cause all changes in the OSS-Fuzz repository to be nullified.
 export OFG_CLEAN_UP_OSS_FUZZ=0
