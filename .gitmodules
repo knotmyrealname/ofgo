@@ -1,6 +1,6 @@
 [submodule "oss-fuzz-gen"]
 	path = oss-fuzz-gen
-	url = https://github.com/knotmyrealname/oss-fuzz-gen
+	url = https://github.com/google/oss-fuzz-gen
 [submodule "oss-fuzz"]
 	path = oss-fuzz
 	url = https://github.com/google/oss-fuzz

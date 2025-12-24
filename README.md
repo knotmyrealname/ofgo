@@ -46,20 +46,24 @@ git submodule update --init --recursive
    - Activation: `source venv/bin/activate`
    - Deactivation: `deactivate`
 
-3. **Install Necessary Dependencies** - Make sure to do this while the `conda` or `venv` environment is activated
+3. **Install Necessary Dependencies** - Make sure to do this while the `conda` or `venv` environment is activated. Here, we've compiled a list of requirements as the OSS-Fuzz ecosystem does not have consistent requirements.
 
 ```
 pip install -r requirements.txt
-pip install -r oss-fuzz-gen/requirements.txt
 ```
 
 ### LLM Key Setup
-OFGO only officially supports OpenAI's ChatGPT API for LLM-based generation, to simplify the workspace. We do not offically support Google's vertex models (listed [here](https://github.com/google/oss-fuzz-gen/blob/main/USAGE.md)), as they require a gcloud account, but there's no reason they wouldn't work if set up properly.
+OFGO only officially supports OpenAI's ChatGPT API for LLM-based generation, to simplify the workspace. We do not offically support Google's Vertex models (listed [here](https://github.com/google/oss-fuzz-gen/blob/main/USAGE.md)), as they require a gcloud account. 
 
 To set up your LLM key, simply export your OpenAI API key as an environmental variable:
 
 ```
 export OPENAI_API_KEY=<your-API-key>
+```
+
+Theoretically there's no reason Google's Vertex models wouldn't work if set up properly, but to enable support, set the environmental variable `SKIP_MODEL_CHECK` - our checks currently only work with OpenAI models. If there's enough interest, we can look into official support for other models, but that is currently not a priority. To set this environmental varaible, run the command:
+```
+export SKIP_MODEL_CHECK
 ```
 
 ## Usage
@@ -88,4 +92,5 @@ If there is enough interest, we may look to update our fork to enable the use of
 ## Contact
 For questions, comments, or support, please create a Github issue. A contributor will respond whenever they are available
 
-TODO - create issue template
+The following contributors are also available for direct contact:
+ - Daniel Dong - danieldong1.618@gmail.coma
