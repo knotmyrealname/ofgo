@@ -177,32 +177,6 @@ def validate_repo_url(url: str) -> str:
     except git.exc.GitError as e:
         raise ValueError(f"ERROR! Couldn't pull from {url}: \n{e}")
 
-def sanitize_repo(url: str) -> str:
-    """Sanitizes a repository URL to ensure it's valid and safe.
-    
-    Validates that the URL is HTTPS, points to GitHub or GitLab, and is
-    properly formatted.
-
-    Args:
-        url (str): The repository URL to sanitize.
-
-    Returns:
-        str: A shell-quoted version of the URL.
-
-    Raises:
-        ValueError: If the URL format is invalid, not HTTPS, or not from
-            GitHub/GitLab. This may need to be updated in the future to extend support.
-    """
-    regex = re.compile(r'https?://[^\s/$.?#].[^\s]*')
-    if not bool(regex.fullmatch(url)):
-        raise ValueError(f"Not a valid URL")
-    parsed = urlparse(url)
-    if not parsed.netloc.endswith('github.com') and not parsed.netloc.endswith('gitlab.com'):
-        raise ValueError(f"URL {url} not GitHub or GitLab. To add support for other Git services, please file a Github issue on our repository.")
-    if parsed.scheme != 'https':
-        raise ValueError(f"URL {url} not HTTPS")
-    return shlex.quote(url)
-
 def sanitize_repo_name(repo_url: str) -> str:
     """Extracts an OSS-Fuzz project name from a repository URL.
     
@@ -217,7 +191,7 @@ def sanitize_repo_name(repo_url: str) -> str:
     Raises:
         ValueError: If the project name cannot be parsed from the URL.
     """
-    name = os.path.basename(repo_url).replace('.git', '').strip().lower()
+    name = os.path.basename(repo_url).replace('.git', '').replace('.','-').strip().lower()
     if not name:
         raise ValueError(f"Could not parse repository name from URL: {repo_url}")
     return name

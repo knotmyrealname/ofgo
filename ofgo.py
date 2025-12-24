@@ -52,7 +52,6 @@ def run_interactive() -> None:
         build = None
         repo = input("Enter project repo URL or name: ").strip()
         if '.' in repo: ## Assumes url if there's a period - no current oss-fuzz projects have a period
-            repo = sanitize_repo(repo)
             project = validate_repo_url(repo)
 
             build = input(f"Enter build approach: agent/template (default: {DEFAULT_BUILD}): ").strip()
@@ -101,7 +100,6 @@ def run_noninteractive(args: argparse.Namespace) -> None:
     log("Running OFGO fully")
     try:
         if '.' in args.repo:
-            args.repo = sanitize_repo(args.repo)
             args.project = validate_repo_url(args.repo)
             check_language_support(args.language)
             check_email(args.email)

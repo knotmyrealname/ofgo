@@ -1,7 +1,6 @@
 import os
 import sys
 import shutil
-import ofgo
 from pathlib2 import Path
 from datetime import date
 from logger_config import setup_logger
