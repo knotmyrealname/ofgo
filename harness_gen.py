@@ -113,7 +113,7 @@ def cleanup_samples(samples_dir: str, project: str) -> None:
     Searches for and deletes directories matching the pattern 'project-.*-\\d*'.
 
     Args:
-        samples_dir (str): Path to the samples directory.
+        samples_dir (str): Path to the directory to clean samples in.
         project (str): Name of the project to clean up samples for.
     """
     generated_project_regex = fr'{project}-.*-\d*'
@@ -192,9 +192,9 @@ def generate_harness(model: str, project: str, temperature: float = DEFAULT_TEMP
     setup_folder_syncing(persistent_project_dir, project_dir)
     validate_project(persistent_project_dir)
         
-    ## Cleans up samples - OSS-Fuzz-gen already cleans up OSS-Fuzz/projects
-    
+    ## Cleans up samples
     cleanup_samples(GENERATED_SAMPLES_DIR, project)
+    cleanup_samples(OSS_FUZZ_PROJECTS_DIR, project)
     clean_old_harnesses(project_dir)
     sync_dirs(project_dir, persistent_project_dir)
 
@@ -205,7 +205,7 @@ def generate_harness(model: str, project: str, temperature: float = DEFAULT_TEMP
     ensure_dir_exists(WORK_DIR)
     
     ## Runs OSS-Fuzz-gen with custom params
-    script = os.path.join(SCRIPTS_DIR, "run-project-modified.sh")
+    script = os.path.join(SCRIPTS_DIR, "ofgo-scripts", "run-project-modified.sh")
     subprocess.run(["chmod", "+x", script])
     subprocess.run([script,
                    OSS_FUZZ_GEN_DIR,
