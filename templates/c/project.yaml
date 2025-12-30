@@ -1,0 +1,37 @@
+## Project homepage
+homepage: {repo} 
+
+## Project language
+language: c
+
+## Primary contact and list of contacts to be CC-ed for bugs - requires Google account
+primary_contact: {email}
+auto_ccs:
+
+## Path to repository hosting source code
+main_repo: {repo}
+
+## (OPT) List of vendor (downstream consumer) email addresses that want access to bug reports as they are filed
+vendor_ccs: 
+
+## (OPT) List of sanitizers to use. (Options: address, memory, undefined).
+sanitizers:
+- address
+- undefined
+
+## (OPT) List of architectures to fuzz on (Options: x86_64, i386). x86_64 is used by default
+architectures:
+- x86_64
+
+## (OPT) List of fuzzing engines to use - libfuzzer is required. By default, libfuzzer, afl, honggfuzz, and centipede are used.
+fuzzing_engines:
+- libfuzzer
+
+## (OPT) Link to a custom help URL that can appear instead of the default guide
+#help_url:
+
+## (OPT) Number of builds per day (Once per day by default, with a cap of 4 builds per day)
+builds_per_day: 1
+
+
+

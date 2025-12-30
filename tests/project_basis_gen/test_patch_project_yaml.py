@@ -1,7 +1,7 @@
 import os
 import shutil
 import yaml
-from project_basis_gen import patch_project_yaml
+from project_agent_gen import patch_project_yaml
 
 BASE_DIR = os.path.dirname(__file__)
 TEST_FILE_DIR = os.path.join(BASE_DIR, "..", "temp_yaml")

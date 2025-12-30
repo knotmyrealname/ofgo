@@ -14,17 +14,12 @@
 #
 ################################################################################
 
-import sys
-import atheris
-## TODO: import your project
-
-def TestOneInput(data):
-    ## TODO: create at least a minimal harness - The Fuzz Introspector needs something to work off of.
-
-def main():
-    atheris.instrument_all()
-    atheris.Setup(sys.argv, TestOneInput, enable_python_coverage=True)
-    atheris.Fuzz()
-
-if __name__ == "__main__":
-    main()
+FROM gcr.io/oss-fuzz-base/base-builder
+RUN apt-get update && apt-get install -y \
+    ## TODO: add your dependencies. Some suggestions are below:
+    ## make autoconf automake autopoint \\
+    ## libtool cmake pkg-config curl check libcpputest-dev \\
+    ## flex bison re2c protobuf-compiler uuid uuid-dev
+RUN git clone --recurse-submodules {repo} {name}
+COPY *.sh *.c $SRC/
+WORKDIR $SRC/{name}

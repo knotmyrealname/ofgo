@@ -14,17 +14,8 @@
 #
 ################################################################################
 
-import sys
-import atheris
-## TODO: import your project
-
-def TestOneInput(data):
-    ## TODO: create at least a minimal harness - The Fuzz Introspector needs something to work off of.
-
-def main():
-    atheris.instrument_all()
-    atheris.Setup(sys.argv, TestOneInput, enable_python_coverage=True)
-    atheris.Fuzz()
-
-if __name__ == "__main__":
-    main()
+FROM gcr.io/oss-fuzz-base/base-builder-go
+RUN pip3 install --upgrade pip
+RUN git clone --recurse-submodules {repo} {name}
+COPY *.sh *.go $SRC/
+WORKDIR $SRC/{name}

@@ -16,6 +16,6 @@
 
 FROM gcr.io/oss-fuzz-base/base-builder-python
 RUN pip3 install --upgrade pip
-RUN git clone {repo} {name}
-COPY *.sh *py $SRC/
+RUN git clone --recurse-submodules {repo} {name}
+COPY *.sh *.py $SRC/
 WORKDIR $SRC/{name}

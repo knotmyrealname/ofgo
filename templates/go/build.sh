@@ -1,3 +1,4 @@
+#!/bin/bash -eu
 # Copyright {year} Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,17 +15,6 @@
 #
 ################################################################################
 
-import sys
-import atheris
-## TODO: import your project
-
-def TestOneInput(data):
-    ## TODO: create at least a minimal harness - The Fuzz Introspector needs something to work off of.
-
-def main():
-    atheris.instrument_all()
-    atheris.Setup(sys.argv, TestOneInput, enable_python_coverage=True)
-    atheris.Fuzz()
-
-if __name__ == "__main__":
-    main()
+## We don't currently understand enough about building go projects in oss-fuzz to be confident
+## in providing a build template - check docs: https://google.github.io/oss-fuzz/getting-started/new-project-guide/go-lang/#buildsh
+## and other projects

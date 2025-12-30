@@ -6,7 +6,7 @@ from helpers import ensure_dir_exists
 from harness_gen import clean_old_harnesses, cleanup_samples
 
 BASE_DIR = os.path.dirname(__file__)
-TEST_FILE_DIR = os.path.join(BASE_DIR,  ".." , "temp")
+TEST_FILE_DIR = os.path.join(BASE_DIR, "__pycache__", "test")
 PROJECT_DIR = os.path.join(TEST_FILE_DIR, "project")
 SAMPLES_DIR = os.path.join(TEST_FILE_DIR, "samples")
 
