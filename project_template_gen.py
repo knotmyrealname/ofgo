@@ -124,7 +124,7 @@ def create_new_project(repo_url: str, email: str, project_name: str, language: s
             
         warn("Project Config Generated. Warning: Some Config files may require further editing to be functional. This is especially true for " + 
             "projects that have many dependency requirements. After updating the config, either rerun TEMPLATE gen with the same parameters or run \n    " + 
-            f"python3 ofgo.py existing --project {project_name} --model <ai-model> --temperature <0-1>")
+            f"python3 ofgo.py existing --project {project_name} --model <LLM_MODEL> --temperature <0-1>")
         
         ## Exits on the creation of a template as the user needs to update it.
         warn(fr"WARNING: Make sure that you update the harness (indicated by fuzz_test.{LANGUAGE_EXTS[language]}) to be at least " +

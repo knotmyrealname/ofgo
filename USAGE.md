@@ -35,7 +35,7 @@ Enter project maintainer email: danieldong1.618@gmail.com
 ...
 ```
 
-This creates a new local project in the `gen-projects/{project_name}` folder, utilizing a template. Note that the template is not complete - you will need to add an entry into your project through the fuzz_test.`ext` file, where `ext` is the file extension for your project language. Once this is done, you can run the program again, now specifying either the original url or the project name (which should be the last element of the repo url: e.g. `https://github.com/knotmyrealname/ofgo -> ofgo` - check `gen-projects` to double check). We recommend using the project name as it doesn't involve any repo validation checks and is thus, faster. An example execution is shown below:
+This creates a new local project in the `gen-projects/{project_name}` folder, utilizing a template. Note that the template is not complete - you will need to add an entry into your project through the fuzz_test.`ext` file, where `ext` is the file extension for your project language and potentially make changes to the `Dockerfile` and `build.sh`. Once this is done, you can run the program again, now specifying either the original url or the project name (which should be the last element of the repo url: e.g. `https://github.com/knotmyrealname/ofgo -> ofgo` - check `gen-projects` to double check). We recommend using the project name as it doesn't involve any repo validation checks and is thus, faster. An example execution is shown below:
 
 ```
 python ofgo.py
