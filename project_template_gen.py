@@ -110,6 +110,7 @@ def create_new_project(repo_url: str, email: str, project_name: str, language: s
         file = Path(build_template)
         build = file.read_text()
         build = build.replace('{year}', current_year)
+        build = build.replace('{name}', project_name)
         file.write_text(build)
 
         ## Fill out fuzzing harness
