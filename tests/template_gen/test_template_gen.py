@@ -23,8 +23,7 @@ def test_generate_from_templates():
     with pytest.raises(SystemExit):
         gen.generate_from_templates(repo_url = "https://github.com/knotmyrealname/ofgo", 
                                     email = "ddong2@ncsu.edu",
-                                    language = "python",
-                                    model = "None")
+                                    language = "python")
     assert os.path.exists(os.path.join(gen.PERSISTENCE_DIR, "ofgo"))
 
     for root, dirs, files in os.walk(os.path.join(gen.TEMPLATE_DIR, "python")):

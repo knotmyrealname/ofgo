@@ -1,5 +1,5 @@
 import pytest
-from project_basis_gen import sanitize_repo_name
+from project_agent_gen import sanitize_repo_name
 
 def test_sanitize_repo_name_basic():
     assert sanitize_repo_name("https://github.com/foo/bar.git") == "bar"
