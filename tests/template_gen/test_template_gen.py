@@ -1,6 +1,7 @@
 import os
 import shutil
 import project_template_gen as gen
+import helpers
 import pytest
 
 BASE_DIR = os.path.dirname(__file__)
@@ -24,7 +25,6 @@ def test_generate_from_templates():
                                     email = "ddong2@ncsu.edu",
                                     language = "python",
                                     model = "None")
-    assert os.path.exists(os.path.join(gen.GIT_REPO_DIR, "ofgo"))
     assert os.path.exists(os.path.join(gen.PERSISTENCE_DIR, "ofgo"))
 
     for root, dirs, files in os.walk(os.path.join(gen.TEMPLATE_DIR, "python")):

@@ -15,7 +15,7 @@ def err(msg):
 def warn(msg):
     logger.warning(color_text(msg, ANSI_YELLOW))
 
-def generate_from_templates(repo_url: str, email: str, language: str, model: str) -> None:
+def generate_from_templates(repo_url: str, email: str, language: str) -> None:
     """Generates project configuration files from language templates.
     
     Clones the repository, and checks for existing projects. If there is an 
@@ -26,7 +26,6 @@ def generate_from_templates(repo_url: str, email: str, language: str, model: str
         repo_url (str): The repository URL to generate files for.
         email (str): The maintainer email to include in project.yaml.
         language (str): The programming language of the project.
-        model (str): The LLM model name (stored but not used in template generation).
 
     Raises:
         SystemExit: If language templates don't exist or generation fails.
@@ -36,13 +35,17 @@ def generate_from_templates(repo_url: str, email: str, language: str, model: str
     ensure_dir_exists(GIT_REPO_DIR)
     ensure_dir_exists(PERSISTENCE_DIR)
 
-    project_name = validate_repo_url(repo_url)
+    project_name = sanitize_repo_name(repo_url)
 
     ## If the project exists in the gen-projects: test, don't generate
     persistent_project_dir = os.path.join(PERSISTENCE_DIR, project_name)
+    project_dir = os.path.join(OSS_FUZZ_DIR, "projects", project_name)
     if os.path.exists(persistent_project_dir):
-        log(f"Project already exists at {persistent_project_dir}.")
+        log(f"Generated project already exists at {persistent_project_dir}.")
         check_project_compilation(project_name)
+    elif os.path.exists(project_dir):
+        log(f"OSS-Fuzz project already exists at {project_dir}. No need to generate new baseline.")
+        shutil.move(project_dir, persistent_project_dir)
     else:
         create_new_project(repo_url, email, project_name, language)
 

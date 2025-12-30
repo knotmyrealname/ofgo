@@ -13,7 +13,7 @@
 # limitations under the License.
 
 '''
-project_basis_gen.py
+project_agent_gen.py
 --------------------
 Creates the Dockerfile, project.yaml, build.sh, (and empty skeleton harnesses) for a given github repository and maintainer email
 

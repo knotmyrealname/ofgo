@@ -17,10 +17,6 @@ import os
 import re
 import argparse
 
-import harness_gen
-import oss_fuzz_hook
-from project_template_gen import generate_from_templates
-from project_basis_gen import generate_project_basis
 from logger_config import setup_logger
 from helpers import *
 
@@ -50,35 +46,46 @@ def run_interactive() -> None:
         email = None
         language = None
         build = None
-        repo = input("Enter project repo URL or name: ").strip()
+        repo = input("Enter project repo URL or name: ").strip(' /')
         if '.' in repo: ## Assumes url if there's a period - no current oss-fuzz projects have a period
             project = validate_repo_url(repo)
 
             build = input(f"Enter build approach: agent/template (default: {DEFAULT_BUILD}): ").strip()
 
-            language = input("Enter project language: ").strip()
-            check_language_support(language)
-                
-            while email is None:
-                try:
-                    email = input("Enter project maintainer email: ").strip()
-                    check_email(email)
-                except ValueError as ve:
-                    email = None
-                    log(f"Error: {ve}. Please reenter your email address.")
+            if project_exists(project):
+                ## No need for email or language if project exists in template_gen
+                log("Project already exists in OSS-Fuzz or in gen-projects.")
+            else:
+                if build != 'agent':
+                    language = input("Enter project language: ").strip()
+                    check_language_support(language)
+                    
+                while email is None:
+                    try:
+                        email = input("Enter project maintainer email: ").strip()
+                        check_email(email)
+                    except ValueError as ve:
+                        email = None
+                        log(f"Error: {ve}. Please reenter your email address.")
         else: 
             if project_exists(repo):
                 project = repo
             else:
                 raise ValueError(f"Project does not exist with name '{repo}'. If you're trying to generate a project, provide an URL instead.")
-        model = input(f"Enter OpenAI model name (default: {DEFAULT_MODEL}): ").strip()
-        if model == '':
-            model = DEFAULT_MODEL
-        temp = input(f"Enter OpenAI model temperature (default: {DEFAULT_TEMPERATURE}): ").strip()
-        if temp == '':
-            temperature = DEFAULT_TEMPERATURE
+        
+        if not project_exists(project) and build != 'agent':
+            ## No need for model or temp if we're doing a fresh template generation
+            model = None
+            temperature = None
         else:
-            temperature = int(temp)
+            model = input(f"Enter OpenAI model name (default: {DEFAULT_MODEL}): ").strip()
+            if model == '':
+                model = DEFAULT_MODEL
+            temp = input(f"Enter OpenAI model temperature (default: {DEFAULT_TEMPERATURE}): ").strip()
+            if temp == '':
+                temperature = DEFAULT_TEMPERATURE
+            else:
+                temperature = int(temp)
         args = argparse.Namespace(repo=repo, project=project, email=email, model=model, language=language, temperature=temperature, build=build)
         run_full_suite(args)
     except ValueError as ve:
@@ -116,7 +123,7 @@ def run_noninteractive(args: argparse.Namespace) -> None:
 def run_full_suite(args: argparse.Namespace) -> None:
     """Runs the complete OFGO onboarding suite.
     
-    Executes the project basis generation, template generation, harness
+    Executes the project agent generation, template generation, harness
     generation, and compilation checks as needed based on the arguments.
 
     Args:
@@ -125,7 +132,7 @@ def run_full_suite(args: argparse.Namespace) -> None:
     if '.' in args.repo:
         if args.build == 'agent':
             log("agent mode was chosen for build files")
-            run_basis_gen(args)
+            run_agent_gen(args)
         else:
             log("template mode was chosen for build files (default)")
             run_template_gen(args)
@@ -135,10 +142,10 @@ def run_full_suite(args: argparse.Namespace) -> None:
     run_harnessgen(args)
     ## No need to run OSS-Fuzz directly as harness_gen already outputs coverage results
 
-def run_basis_gen(args: argparse.Namespace) -> None:
+def run_agent_gen(args: argparse.Namespace) -> None:
     """Generates project structure using an agent-based approach.
     
-    Validates the model and temperature, then runs the project basis
+    Validates the model and temperature, then runs the project agent
     generation to create project.yaml, build.sh, and Dockerfile.
 
     Args:
@@ -153,6 +160,7 @@ def run_basis_gen(args: argparse.Namespace) -> None:
     except ValueError as ve:
         err(ve)
     log(f"Generating project structure with {args.repo}, {args.email}")
+    from project_agent_gen import generate_project_basis
     repo_dir = generate_project_basis(args.repo, args.email, args.model)
 
 def run_template_gen(args: argparse.Namespace) -> None:
@@ -165,7 +173,8 @@ def run_template_gen(args: argparse.Namespace) -> None:
         args: Command-line arguments containing the repo, email, language, and model.
     """
     log(f"Generating project with a template")
-    generate_from_templates(args.repo, args.email, args.language, args.model)
+    from project_template_gen import generate_from_templates
+    generate_from_templates(args.repo, args.email, args.language)
 
 def run_harnessgen(args: argparse.Namespace) -> None:
     """Generates harnesses for a project and consolidates them.
@@ -184,8 +193,9 @@ def run_harnessgen(args: argparse.Namespace) -> None:
     except ValueError as ve:
         err(ve)
     log(f"Generating harness for {args.project}")
-    harness_gen.generate_harness(args.model, args.project, args.temperature)
-    harness_gen.consolidate_harnesses(args.project)
+    from harness_gen import generate_harness, consolidate_harnesses
+    generate_harness(args.model, args.project, args.temperature)
+    consolidate_harnesses(args.project)
 
 def run_ossfuzz(args: argparse.Namespace) -> None:
     """Runs OSS-Fuzz on a project with its harnesses.
@@ -201,7 +211,8 @@ def run_ossfuzz(args: argparse.Namespace) -> None:
     if not os.path.exists(os.path.join(OSS_FUZZ_DIR, f"projects/{args.project}")):
         raise ValueError(f"Project '{args.project}' does not exist in OSS-Fuzz")
     log(f"Running OSS-Fuzz on {args.project}")
-    oss_fuzz_hook.run_project(args.project)
+    from oss_fuzz_hook import run_project
+    run_project(args.project)
 
 def run_corpusgen(args: argparse.Namespace) -> None:
     """Generates input corpus for a project (not yet implemented).
@@ -216,6 +227,14 @@ def run_corpusgen(args: argparse.Namespace) -> None:
     """
     ##TODO
     warn("Corpus Generation not yet Implemented")
+
+def remove(args: argparse.Namespace) -> None:
+    if project_exists(args.project):
+        log(f"Removing all instances of '{args.project}' from gen-projects and OSS-Fuzz")
+        clean_dir(os.path.join(PERSISTENCE_DIR, args.project))
+        clean_dir(os.path.join(OSS_FUZZ_PROJECTS_DIR, args.project))
+    else:
+        log(f"No instance of '{args.project}' found.")
 
 def run_on_args() -> None:
     """Parses and executes OFGO commands from command-line arguments.
@@ -247,19 +266,18 @@ def run_on_args() -> None:
     ni.add_argument('--language', type=str, help="Programming language of project to fuzz")
     ni.set_defaults(func=run_noninteractive)
 
-    # Run only basis gen
-    ba = subparsers.add_parser('basis', help="Generate skeleton of the harness (project.yaml, build.sh, Dockerfile, empty-fuzzers) using OSS-Fuzz-Gen Build_Generator Agent Mode")
+    # Run only agent gen
+    ba = subparsers.add_parser('agent', help="Generate skeleton of the harness (project.yaml, build.sh, Dockerfile, empty-fuzzers) using OSS-Fuzz-Gen Build_Generator Agent Mode")
     ba.add_argument('--repo', type=str, help="Project repo URL")
     ba.add_argument('--email', type=str, help="Project maintainer email")
     ba.add_argument('--model', type=str, default=DEFAULT_MODEL, help="OpenAI model name")
-    ba.set_defaults(func=run_basis_gen)
+    ba.set_defaults(func=run_agent_gen)
 
     # Run only template gen
     te = subparsers.add_parser('template', help="Uses static templates to generate skeleton of the harness (project.yaml, build.sh, Dockerfile, empty-fuzzer)")
     te.add_argument('--repo', type=str, help="Project repo URL")
     te.add_argument('--email', type=str, help="Project maintainer email")
     te.add_argument('--language', type=str, help="Programming language of project to fuzz")
-    te.add_argument('--model', type=str, default=DEFAULT_MODEL, help="OpenAI model name")
     te.set_defaults(func=run_template_gen)
 
     # Run only OSS-Fuzz-gen
@@ -280,6 +298,11 @@ def run_on_args() -> None:
     cg.add_argument('--model', type=str, default=DEFAULT_MODEL, help="OpenAI model name")
     cg.add_argument('--temperature', type=int, default=DEFAULT_TEMPERATURE, help="Temperature for OpenAI model")
     cg.set_defaults(func=run_corpusgen)
+
+    # Remove project
+    rm = subparsers.add_parser('remove', help="Remove project from OFGO")
+    rm.add_argument('--project', type=str, help="Project name")
+    rm.set_defaults(func=remove)
 
     # Handle command arguments
     arguments = sys.argv[1:]

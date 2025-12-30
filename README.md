@@ -69,9 +69,6 @@ export SKIP_MODEL_CHECK
 ## Usage
 Check out our detailed [usage guide](./USAGE.md) for documentation on available commands
 
-## Understanding Output
-TODO
-
 ## Enabling GPT-5 Support
 By default, OSS-Fuzz-gen does not support OpenAI's GPT-5 models. If you would like to work with GPT-5, we have provided a fork with a patch to enable GPT-5. Note that GPT-5 will only work with a temperature of 1 (set by `--temperature 1`). To enable this patch, run the following commands:
 
@@ -88,6 +85,9 @@ Currently, the following GPT-5 models are supported:
 
 ### Open Source LLMs
 If there is enough interest, we may look to update our fork to enable the use of Open Source LLMs through HuggingFace. We suspect these models will produce inferior results, compared to large closed-source models, but that will be a topic of future research. 
+
+### Helper Scripts
+We have included a selection of helper scripts in our `scripts` directory for manipulating OSS-Fuzz project data.
 
 ## Contact
 For questions, comments, or support, please create a Github issue. A contributor will respond whenever they are available

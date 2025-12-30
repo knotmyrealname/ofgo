@@ -26,7 +26,7 @@ from helpers import *
 ## Variable declaration
 BENCHMARK_HEURISTICS = "far-reach-low-coverage,low-cov-with-fuzz-keyword,easy-params-far-reach"
 NUMBER_OF_HARNESSES = 2
-NUM_SAMPLES = 1 # Currently only supports 1
+NUM_SAMPLES = 1 # Currently only supports 1 - may lead to unexpected behavior
 RESULTS_DIR = os.path.join(BASE_DIR, "results")
 REPORT_DIR = os.path.join(BASE_DIR, "report")
 GENERATED_SAMPLES_DIR = os.path.join(PERSISTENCE_DIR, "SAMPLES")
@@ -240,8 +240,6 @@ def generate_harness(model: str, project: str, temperature: float = DEFAULT_TEMP
     else: 
         log("Generation Failed. You may have to check the run logs to diagnose the issue.")
         return False
-
-    
 
 def consolidate_harnesses(project: str, sample_num: int = 1) -> None:
     """Consolidates generated harnesses into a single directory.
