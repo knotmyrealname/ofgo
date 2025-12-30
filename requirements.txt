@@ -111,6 +111,7 @@ pylint==3.2.5
 pyparsing==3.2.3
 pyright==1.1.345
 pytest==9.0.2
+pytest-cov==7.0.0
 pytest-mock==3.15.1
 python-dateutil==2.9.0.post0
 python-dotenv==1.1.0
