@@ -4,7 +4,6 @@ import shutil
 import sys
 import git
 import openai
-import shlex
 import subprocess
 
 from urllib.parse import urlparse

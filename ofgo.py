@@ -14,7 +14,6 @@
 
 import sys
 import os
-import re
 import argparse
 
 from logger_config import setup_logger
