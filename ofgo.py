@@ -155,7 +155,6 @@ def run_agent_gen(args: argparse.Namespace) -> None:
         SystemExit: If model validation fails.
     """
     try:
-        print(SKIP_MODEL_CHECK)
         validate_model(args.model, args.temperature)
     except ValueError as ve:
         err(ve)

@@ -27,7 +27,7 @@ GIT_REPO_DIR = os.path.join(WORK_DIR, "ofgo", "repositories")
 DEFAULT_MODEL = 'gpt-4o-mini'
 DEFAULT_TEMPERATURE = 0.4
 ## Turns off and on the OPENAI_API Key checks - Defaults to true
-SKIP_MODEL_CHECK = True if 'SKIP_MODEL_CHECK' in os.environ else False
+SKIP_MODEL_CHECK = (os.environ['SKIP_MODEL_CHECK'] != 0) if 'SKIP_MODEL_CHECK' in os.environ else False
 
 ## Dict of supported languages and their file extensions
 LANGUAGE_EXTS = {
@@ -103,17 +103,34 @@ def sync_dirs(src_dir: str, dest_dir: str) -> None:
     shutil.copytree(src_dir, dest_dir)
 
 def clean_dir(path: str) -> None:
-    """Deletes a directory, symlink, or file if it exists.
+    """Deletes a directory, symlink, or file if it exists. If a failure is discovered
+    (likely due to write-only files) a fallback mode is activated to delete the files
+    that can be deleted
 
     Args:
         path (str): The path to the directory, symlink, or file to delete.
     """
-    if os.path.islink(path):
+    if os.path.islink(path): 
+        ## Is symlink - assuming never write protected
         os.unlink(path)
-    elif os.path.isdir(path):
-        shutil.rmtree(path)
+    elif os.path.isdir(path): 
+        ## Is directory - may be write-protected
+        try:
+            shutil.rmtree(path)
+        except:
+            ## More inefficient fallback to remove the files that can be removed
+            for root, dir, files in os.walk(path):
+                for file in files:
+                    try:
+                        os.remove(path)
+                    except:
+                        None
     elif os.path.exists(path):
-        os.unlink(path)
+        ## Should be a file - may be write-protected
+        try:
+            os.remove(path)
+        except:
+            return
     
 def project_exists(project: str) -> bool:
     """Checks if a project exists in either the persistence or OSS-Fuzz directory.
@@ -212,7 +229,10 @@ def validate_model(model: str, temperature: float) -> None:
         ValueError: If the API key is missing, invalid, or the model fails to respond.
     """
     global SKIP_MODEL_CHECK
-    if SKIP_MODEL_CHECK: return
+    if SKIP_MODEL_CHECK: 
+        helper_log(SKIP_MODEL_CHECK)
+        helper_log("Skipping Model Check")
+        return
     ## Get API key
     try:
         client = openai.OpenAI(api_key=os.environ['OPENAI_API_KEY'])

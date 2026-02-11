@@ -19,8 +19,6 @@ import time
 import subprocess
 import shutil
 
-sys.path.insert(0, "./oss-fuzz-gen")
-import run_all_experiments
 from helpers import *
 
 ## Variable declaration
@@ -30,6 +28,7 @@ NUM_SAMPLES = 1 # Currently only supports 1 - may lead to unexpected behavior
 RESULTS_DIR = os.path.join(BASE_DIR, "results")
 REPORT_DIR = os.path.join(BASE_DIR, "report")
 GENERATED_SAMPLES_DIR = os.path.join(PERSISTENCE_DIR, "SAMPLES")
+INTROSPECTOR_PORT = os.environ['WEBAPP_PORT'] if 'WEBAPP_PORT' in os.environ else '8080'
 
 logger = setup_logger(color_text(__name__, ANSI_CYAN))
 def log(msg):
@@ -217,7 +216,8 @@ def generate_harness(model: str, project: str, temperature: float = DEFAULT_TEMP
                    str(NUM_SAMPLES),
                    model,
                    str(temperature),
-                   RESULTS_DIR])
+                   RESULTS_DIR,
+                   INTROSPECTOR_PORT])
 
     end = time.time()
     log("Completed in %.4f seconds" % (end - start))

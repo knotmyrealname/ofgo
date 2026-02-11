@@ -9,7 +9,8 @@ All operations are logged with colored name output to the console, signifying th
 ## Environmental Variables
 OFGO recognizes the following environmental variables:
 - `OPENAI_API_KEY=<your-api-key>` - The API key to access various OPEN-AI models. This is only necessary for LLM-related tasks - it is not checked for parts of the pipeline that do not require an LLM, such as template generation and OSS-Fuzz results
-- `SKIP_MODEL_CHECK` - By setting this environmental variable, the model check can be bypassed, enabling testing or Google Vertex models to be ran - our functionality does not currently support checks for a valid Google Vertex model.
+- `SKIP_MODEL_CHECK=<0/1>` - By setting this environmental variable, the model check can be bypassed, enabling testing or Google Vertex models to be ran - our functionality does not currently support checks for a valid Google Vertex model. To bypass the model check, set this variable to anything other than `0`, and set it to `0` or remove the variable to re-enable the check.
+- `WEBAPP_PORT=<port>` - By default, port 8080 on localhost is used for the local Fuzz Introspector Webserver. If you want to update this for any reason, you can set this environmental variable.
 
 # Running OFGO
 
