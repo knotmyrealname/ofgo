@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-project_basis_gen.py
+'''
+project_agent_gen.py
 --------------------
 Creates the Dockerfile, project.yaml, build.sh, (and empty skeleton harnesses) for a given github repository and maintainer email
 
@@ -25,63 +25,48 @@ Usage:
 Notes:
     - Assumes you have followed the setup guide: USAGE.md
     - model defaults to 'gpt-4o-mini'
-"""
+'''
 
 import os
-import sys
 import yaml
 import shutil
 import subprocess
-from logger_config import setup_logger
 
-# -------------------------------------------------------------------
-# Constants 
-# -------------------------------------------------------------------
-BASE_DIR = os.path.dirname(__file__)
-OSS_FUZZ_DIR = os.path.join(BASE_DIR, "oss-fuzz")
-OSS_FUZZ_GEN_DIR = os.path.join(BASE_DIR, "oss-fuzz-gen")
-GEN_PROJECTS_DIR = os.path.join(BASE_DIR, "gen-projects")
-DEFAULT_MODEL = "gpt-4o-mini"
+from logger_config import setup_logger
+from constants import *
+from helpers import color_text, clean_dir
 
 # -------------------------------------------------------------------
 # Logging functionality
 # -------------------------------------------------------------------
-logger = setup_logger(__name__)
-def log(msg: str) -> None:
-    logger.info(f"\033[94m{msg}\033[00m")
-
-# -------------------------------------------------------------------
-# Helper functions
-# -------------------------------------------------------------------
-def sanitize_repo_name(repo_url: str) -> str:
-    """Extracts an OSS-Fuzz project name (lowercase repo name)."""
-    name = os.path.basename(repo_url).replace(".git", "").strip().lower()
-    if not name:
-        raise ValueError(f"Could not parse repository name from URL: {repo_url}")
-    return name
-
-def clean_dir(path: str):
-    """Delete a directory/symlink if it exists."""
-    if os.path.islink(path):
-        os.unlink(path)
-    elif os.path.isdir(path):
-        shutil.rmtree(path)
-    elif os.path.exists(path):
-        os.unlink(path)
+logger = setup_logger(color_text(__name__, ANSI_LIGHT_PURPLE))
+def log(msg):
+    logger.info(msg)
 
 # -------------------------------------------------------------------
 # Runner execution 
 # -------------------------------------------------------------------
 def run_runner(repo_url: str, repo_name: str, model: str) -> str:
-    """
-    Calls OSS-Fuzz-Gen’s experimental/build_generator/runner.py in agent mode
-    Return Value (path to generated files):
-        OSS_FUZZ_GEN_DIR/generated-builds-tmp/oss-fuzz-projects/<repo_name>
+    """Calls OSS-Fuzz-Gen's build generator to create project configuration files.
+    
+    Invokes the experimental build_generator runner to generate project basis
+    files (project.yaml, build.sh, Dockerfile) using the specified model.
+
+    Args:
+        repo_url (str): The repository URL to generate files for.
+        repo_name (str): The sanitized project name from the repository.
+        model (str): The LLM model to use for generation.
+
+    Returns:
+        str: Path to the generated project directory.
+
+    Raises:
+        RuntimeError: If the generator fails or produces no output.
     """
     
     # Runner command expects repo name as a text file "input.txt"
     input_path = os.path.join(OSS_FUZZ_GEN_DIR, "input.txt")
-    with open(input_path, "w") as f:
+    with open(input_path, 'w') as f:
         f.write(repo_url + "\n")
     
     # Get rid of previous temporary folder
@@ -136,7 +121,12 @@ def run_runner(repo_url: str, repo_name: str, model: str) -> str:
 # Copy and patch functions
 # -------------------------------------------------------------------
 def copy_outputs(src_dir: str, dst_dir: str) -> None:
-    """Entire entire project build dir to the dst directory."""
+    """Copies the entire generated project directory to the destination.
+
+    Args:
+        src_dir (str): Path to the source directory to copy from.
+        dst_dir (str): Path to the destination directory to copy to.
+    """
     log(f"Copying files from {src_dir} to {dst_dir}")
 
     # dst_dir confirmed not to exist by main
@@ -146,14 +136,19 @@ def copy_outputs(src_dir: str, dst_dir: str) -> None:
     log(f"Copied: {files} to {dst_dir}")
 
 def patch_project_yaml(yaml_path: str, email: str) -> None:
-    """Update the maintainer email in project.yaml."""
+    """Updates the maintainer email in project.yaml.
+
+    Args:
+        yaml_path (str): Path to the project.yaml file.
+        email (str): The email address to set as primary contact.
+    """
     if not os.path.exists(yaml_path):
         log("project.yaml not found. skipping patch")
         return
-    with open(yaml_path, "r") as f:
+    with open(yaml_path, 'r') as f:
         y = yaml.safe_load(f) or {}
-    y["primary_contact"] = email
-    with open(yaml_path, "w") as f:
+    y['primary_contact'] = email
+    with open(yaml_path, 'w') as f:
         yaml.dump(y, f, sort_keys=False)
     log(f"Updated maintainer email to: {email}")
 
@@ -161,10 +156,19 @@ def patch_project_yaml(yaml_path: str, email: str) -> None:
 # Main workflow
 # -------------------------------------------------------------------
 def generate_project_basis(repo_url: str, email: str, model: str = DEFAULT_MODEL) -> str:
-    """
-    Calls function to generate the 3 basis files
-    Copies the output out of oss-fuzz-gen and into out_dir.
-    Patches the project.yaml with email as primary_contact
+    """Generates project basis files (project.yaml, build.sh, Dockerfile).
+    
+    Calls the OSS-Fuzz-Gen build generator to create project configuration
+    files, then copies the output to the persistence directory and patches
+    the project.yaml with the provided email.
+
+    Args:
+        repo_url (str): The repository URL to generate files for.
+        email (str): The maintainer email to include in project.yaml.
+        model (str): The LLM model to use. Defaults to DEFAULT_MODEL.
+
+    Returns:
+        str: Path to the generated project directory.
     """
     
     # Grab repo name
@@ -172,12 +176,12 @@ def generate_project_basis(repo_url: str, email: str, model: str = DEFAULT_MODEL
     
     # Create gen-projects dir if it does not exist
     log(f"[+] Starting OSS-Fuzz basis generation for {repo_name}")
-    if not os.path.exists(GEN_PROJECTS_DIR):
-        os.makedirs(GEN_PROJECTS_DIR)
+    if not os.path.exists(PERSISTENCE_DIR):
+        os.makedirs(PERSISTENCE_DIR)
 
 
     # gen-projects/<repo_name>
-    out_dir = os.path.join(GEN_PROJECTS_DIR, repo_name)
+    out_dir = os.path.join(PERSISTENCE_DIR, repo_name)
 
     # do not overwrite previous projects
     if os.path.exists(out_dir):

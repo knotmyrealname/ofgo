@@ -1,7 +1,7 @@
 import os
 import shutil
 import pytest
-from project_basis_gen import clean_dir
+from project_agent_gen import clean_dir
 
 BASE_DIR = os.path.dirname(__file__)
 TEST_FILE_DIR = os.path.join(BASE_DIR, "..", "temp_clean_dir")

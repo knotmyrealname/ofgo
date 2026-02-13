@@ -12,49 +12,43 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
+'''
 OSS-Fuzz Runner
 Will run existing or newly generated OSS-Fuzz harnesses
-"""
+'''
 import os
 import subprocess
 import re
 
 from logger_config import setup_logger
+from constants import *
+from helpers import color_text
 
-BASE_DIR = os.path.dirname(__file__)
-OSS_FUZZ_DIR = os.path.join(BASE_DIR, "oss-fuzz")
+logger = setup_logger(color_text(__name__, ANSI_PURPLE))
+def log(msg):
+    logger.info(msg)
 
-logger = setup_logger(__name__)
-CONSOLIDATE_DIR = os.path.join(BASE_DIR, "gen-projects")
-## Purple
-def log(output):
-    logger.info(f"\033[95moss_fuzz_hook:\033[00m {output}")
-
-"""
-Runs OSS-Fuzz projects with either existing or generated harnesses
-
-Args:
-    project (str): Name of the project to run with oss-fuzz. Required.
-    harness_type (str): Choose whether to run existing harness in oss-fuzz or generated harnesses. Default to "existing".
-
-Returns (bool): Success/Failure status 
-"""
-def run_project(project: str = None, harness_type: str = "existing"):
-    """
-    Run OSS-Fuzz project with specified harness type.
+def run_project(project: str = None, harness_type: str = "existing") -> bool:
+    """Runs an OSS-Fuzz project with specified harness type.
     
+    Builds the project, identifies harnesses based on the specified type
+    (existing or generated), and runs each fuzzer with predefined parameters.
+
     Args:
-        project: The project name
-        harness_type: "existing" for standard OSS-Fuzz harnesses, 
-                     "generated" for automatically generated harnesses
+        project: The project name to run with OSS-Fuzz.
+        harness_type: Type of harnesses to run. Must be "existing" for standard
+            OSS-Fuzz harnesses or "generated" for automatically generated ones.
+            Defaults to "existing".
+
+    Returns:
+        True if the project ran successfully, False otherwise.
     """
     path_to_helper = os.path.join(OSS_FUZZ_DIR, "infra", "helper.py")
     
     if harness_type == "existing":
-        log(f"Running existing project {project} with OSS-FUZZ.")
+        log(f"Running existing project '{project}' with OSS-FUZZ.")
     elif harness_type == "generated":
-        log(f"Running generated project {project} with OSS-FUZZ.")
+        log(f"Running generated project '{project}' with OSS-FUZZ.")
     else:
         log(f"Error: Unknown harness_type '{harness_type}'. Use 'existing' or 'generated'.")
         return False
@@ -62,15 +56,12 @@ def run_project(project: str = None, harness_type: str = "existing"):
     # Build the project (same for both types)
     commands = [
         ["python3", path_to_helper, "pull_images"],
-        ["python3", path_to_helper, "build_image", project],
+        ["python3", path_to_helper, "build_image", project, "--pull"],
         ["python3", path_to_helper, "build_fuzzers", project]
     ]
     for c in commands:
         log(f"Building images for {project}")
-        if c == ["python3", path_to_helper, "build_image", project]:
-            res = subprocess.run(c, input="y\n", text=True)
-        else:
-            res = subprocess.run(c)
+        res = subprocess.run(c)
         if res.returncode != 0:
             log(f"Error: {res.stderr}")
             return False

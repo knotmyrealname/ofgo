@@ -1,4 +1,3 @@
-## Check the ddong/cleanup branch for the latest code - it's overall more usable, but it's possible that there may still be broken code somewhere
 # OFGO: An Easy way to get Started with Fuzzing
 This collection of scripts serves as an entry into fuzzing with OSS-Fuzz, simplifying the whole process into one command line argument. We utilize existing functionality within OSS-Fuzz and OSS-Fuzz gen to make this happen to maximize compatibility, with some custom code to enable automatic corpus generation. Note that, although we will be generating fuzzing harnesses, you will still have to **manually** add them to OSS-Fuzz via a pull request.
 
@@ -46,15 +45,14 @@ git submodule update --init --recursive
    - Activation: `source venv/bin/activate`
    - Deactivation: `deactivate`
 
-3. **Install Necessary Dependencies** - Make sure to do this while the `conda` or `venv` environment is activated
+3. **Install Necessary Dependencies** - Make sure to do this while the `conda` or `venv` environment is activated. Here, we've compiled a list of requirements as the OSS-Fuzz ecosystem does not have consistent requirements.
 
 ```
 pip install -r requirements.txt
-pip install -r oss-fuzz-gen/requirements.txt
 ```
 
 ### LLM Key Setup
-OFGO only officially supports OpenAI's ChatGPT API for LLM-based generation, to simplify the workspace. We do not offically support Google's vertex models (listed [here](https://github.com/google/oss-fuzz-gen/blob/main/USAGE.md)), as they require a gcloud account, but there's no reason they wouldn't work if set up properly.
+OFGO only officially supports OpenAI's ChatGPT API for LLM-based generation, to simplify the workspace. We do not offically support Google's Vertex models (listed [here](https://github.com/google/oss-fuzz-gen/blob/main/USAGE.md)), as they require a gcloud account. 
 
 To set up your LLM key, simply export your OpenAI API key as an environmental variable:
 
@@ -62,11 +60,15 @@ To set up your LLM key, simply export your OpenAI API key as an environmental va
 export OPENAI_API_KEY=<your-API-key>
 ```
 
+OSS-Fuzz-Gen also supports Google Vertex models and OpenAI API keys hosted on Azure. Theoretically there's no reason these models will work if set up properly, just we have not implemented internal checks for these APIs as we either do not have access to (Azure) or cannot figure out (Vertex AI, see below) how to get it to work. To enable support we have included the option to skip our internal model checks (which save time by catching a missing key early), which you can utilize by setting the environmental variable `SKIP_MODEL_CHECK` - our checks currently only work with OpenAI models. If there's enough interest, we can put more time into supportting other models, but that is currently not a priority. To set this environmental variable, run the command:
+```
+export SKIP_MODEL_CHECK=1
+```
+
+**IMPORTANT:** We believe that there may an issue with OSS-Fuzz-Gen's Vertex AI integration - We attempted to utilize VertexAI for generation but ran into authentication issues that did not show up on our VertexAI test scripts.
+
 ## Usage
 Check out our detailed [usage guide](./USAGE.md) for documentation on available commands
-
-## Understanding Output
-TODO
 
 ## Enabling GPT-5 Support
 By default, OSS-Fuzz-gen does not support OpenAI's GPT-5 models. If you would like to work with GPT-5, we have provided a fork with a patch to enable GPT-5. Note that GPT-5 will only work with a temperature of 1 (set by `--temperature 1`). To enable this patch, run the following commands:
@@ -85,7 +87,11 @@ Currently, the following GPT-5 models are supported:
 ### Open Source LLMs
 If there is enough interest, we may look to update our fork to enable the use of Open Source LLMs through HuggingFace. We suspect these models will produce inferior results, compared to large closed-source models, but that will be a topic of future research. 
 
+### Helper Scripts
+We have included a selection of helper scripts in our `scripts` directory for manipulating OSS-Fuzz project data.
+
 ## Contact
 For questions, comments, or support, please create a Github issue. A contributor will respond whenever they are available
 
-TODO - create issue template
+The following contributors are also available for direct contact:
+ - Daniel Dong - danieldong1.618@gmail.coma

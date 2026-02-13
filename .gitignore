@@ -9,3 +9,4 @@ gen-projects/
 tests/temp
 .coverage
 coverage.xml
+scripts/script_output

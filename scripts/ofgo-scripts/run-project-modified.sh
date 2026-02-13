@@ -25,8 +25,7 @@ NUM_SAMPLES=${7}
 OSS_FUZZ_GEN_MODEL=${8}
 TEMPERATURE=${9}
 WORK_DIR=${10}
-
-
+PORT=${11}
 
 # Specifify OSS-Fuzz-gen to not clean up the OSS-Fuzz project. Enabling
 # this will cause all changes in the OSS-Fuzz repository to be nullified.
@@ -47,7 +46,7 @@ python3 $FI_DIR/oss_fuzz_integration/runner.py \
 reset
 
 # Shut down the existing webapp if it's running
-curl --silent http://localhost:8080/api/shutdown || true
+curl --silent http://localhost:${PORT}/api/shutdown || true
 
 # Create Fuzz Introspector's webserver DB
 echo "[+] Creating the webapp DB"
@@ -57,7 +56,7 @@ python3 ./web_db_creator_from_summary.py \
 
 # Start webserver
 echo "Shutting down server in case it's running"
-curl --silent http://localhost:8080/api/shutdown || true
+curl --silent http://localhost:${PORT}/api/shutdown || true
 
 echo "[+] Launching FI webapp"
 cd $FI_DIR/tools/web-fuzzing-introspection/app/
@@ -69,7 +68,7 @@ SECONDS=5
 while true
 do
   # Checking if exists
-  MSG=$(curl -v --silent 127.0.0.1:8080 2>&1 | grep "Fuzzing" | wc -l)
+  MSG=$(curl -v --silent 127.0.0.1:${PORT} 2>&1 | grep "Fuzzing" | wc -l)
   if [[ $MSG > 0 ]]; then
     echo "Found it"
     break
@@ -97,7 +96,7 @@ LLM_NUM_EVA=4 LLM_NUM_EXP=4 ./run_all_experiments.py \
     --temperature ${TEMPERATURE} \
     --work-dir ${WORK_DIR} \
     --num-samples ${NUM_SAMPLES} \
-    --introspector-endpoint http://127.0.0.1:8080/api 
+    --introspector-endpoint http://127.0.0.1:${PORT}/api 
 
 echo "Shutting down started webserver"
-curl --silent http://localhost:8080/api/shutdown || true
+curl --silent http://localhost:${PORT}/api/shutdown || true
