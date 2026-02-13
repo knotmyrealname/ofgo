@@ -10,7 +10,45 @@ All operations are logged with colored name output to the console, signifying th
 OFGO recognizes the following environmental variables:
 - `OPENAI_API_KEY=<your-api-key>` - The API key to access various OPEN-AI models. This is only necessary for LLM-related tasks - it is not checked for parts of the pipeline that do not require an LLM, such as template generation and OSS-Fuzz results
 - `SKIP_MODEL_CHECK=<0/1>` - By setting this environmental variable, the model check can be bypassed, enabling testing or Google Vertex models to be ran - our functionality does not currently support checks for a valid Google Vertex model. To bypass the model check, set this variable to anything other than `0`, and set it to `0` or remove the variable to re-enable the check.
-- `WEBAPP_PORT=<port>` - By default, port 8080 on localhost is used for the local Fuzz Introspector Webserver. If you want to update this for any reason, you can set this environmental variable.
+- `WEBAPP_PORT=<port>` - By default, port 8080 on `localhost` is used for the local Fuzz Introspector Webserver. If you want to update this for any reason, you can set this environmental variable.
+
+There are also additional environmental variables that are supported by OSS-Fuzz-Gen. We believe the following may be important:
+
+### OSS-Fuzz-Gen
+
+**Vertex AI** (follow the [OSS-Fuzz-Gen guide](https://github.com/google/oss-fuzz-gen/blob/main/USAGE.md) for full setup as things may change). 
+
+**Reminder:** Set the environmental variable `SKIP_MODEL_CHECK=1` if using Vertex AI.
+
+- `CLOUD_ML_PROJECT_ID=<gcp-project-id>` - The project id associated with the Google Cloud project you want to use for Vertex AI. This project must have the Vertex AI API enabled to run OSS-Fuzz-Gen.
+- `VERTEX_AI_LOCATIONS=us-west1,us-west4,us-east4,us-central1` - A list of the datacenters you want to run Vertex AI on. You must have Vertex AI quota on a specific datacenter to be able to utilize it.
+
+**Azure OpenAI API key** We do not current support model checks for Azure OpenAI keys - skip the model check for Azure by setting `SKIP_MODEL_CHECK=1`. To run with OpenAI keys hosted on Azure, you'll need to export the following environmental variables and add `-azure` to the end of the OpenAI model (not all models may be supported):
+
+- `AZURE_OPENAI_API_KEY=<your-azure-api-key>`
+- `AZURE_OPENAI_ENDPOINT=<your-azure-endpoint>`
+- `AZURE_OPENAI_API_VERSION=<your-azure-api-version>`
+
+### Exporting Environmental variables
+To export an environmental variable in linux, you simply have to run the command:
+
+`export <ENVIRONMENTAL_VARIABLE=<VALUE>>`
+
+e.g. `export SKIP_MODEL_CHECK=1`
+
+You can chain these together before the execution of your program, with an example execution as follows:
+
+```
+export SKIP_MODEL_CHECK=1 && export WEBAPP_PORT=8081 && export CLOUD_ML_PROJECT_ID=ofgo-486423 && export VERTEX_AI_LOCATIONS=us-central1 && python ofgo.py <command1> <arg1> <command2> <arg2> ...
+```
+
+or export them before running ofgo:
+```
+export SKIP_MODEL_CHECK=1 && export WEBAPP_PORT=8081 && export CLOUD_ML_PROJECT_ID=ofgo-486423 && export VERTEX_AI_LOCATIONS=us-central1
+
+python ofgo.py <command1> <arg1> <command2> <arg2> ...
+```
+
 
 # Running OFGO
 

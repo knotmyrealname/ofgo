@@ -23,15 +23,6 @@ from constants import *
 from logger_config import setup_logger
 from helpers import color_text, check_language_support, sync_dirs, ensure_dir_exists
 
-## Variable declaration
-BENCHMARK_HEURISTICS = "far-reach-low-coverage,low-cov-with-fuzz-keyword,easy-params-far-reach"
-NUMBER_OF_HARNESSES = 2
-NUM_SAMPLES = 1 # Currently only supports 1 - may lead to unexpected behavior
-RESULTS_DIR = os.path.join(BASE_DIR, "results")
-REPORT_DIR = os.path.join(BASE_DIR, "report")
-GENERATED_SAMPLES_DIR = os.path.join(PERSISTENCE_DIR, "SAMPLES")
-INTROSPECTOR_PORT = os.environ['WEBAPP_PORT'] if 'WEBAPP_PORT' in os.environ else '8080'
-
 logger = setup_logger(color_text(__name__, ANSI_CYAN))
 def log(msg):
     logger.info(msg)

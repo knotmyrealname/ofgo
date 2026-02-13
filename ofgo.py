@@ -22,8 +22,6 @@ from helpers import (color_text, validate_repo_url, project_exists,
                      check_language_support, check_email, check_project_compilation,
                      validate_model, clean_dir)
 
-DEFAULT_BUILD = 'template'
-
 logger = setup_logger(color_text(__name__, ANSI_GREEN))
 def log(msg):
     logger.info(msg)

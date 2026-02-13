@@ -195,12 +195,12 @@ def validate_model(model: str, temperature: float) -> None:
         helper_log("Skipping Model Check")
         return
     ## Get API key
-    try:
-        client = openai.OpenAI(api_key=os.environ['OPENAI_API_KEY'])
-    except:
+    if OPENAI_API_KEY == None:
         raise ValueError("""Program execution failed: Missing OpenAI API Key.
 Make sure to export your API Key via the following command:
    export OPENAI_API_KEY={your_api_key}""")
+    
+    client = openai.OpenAI(api_key=OPENAI_API_KEY])
         
     ## Check model
     try:
