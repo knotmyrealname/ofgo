@@ -21,7 +21,8 @@ import subprocess
 import re
 
 from logger_config import setup_logger
-from helpers import BASE_DIR, OSS_FUZZ_DIR, color_text, ANSI_PURPLE
+from constants import *
+from helpers import color_text
 
 logger = setup_logger(color_text(__name__, ANSI_PURPLE))
 def log(msg):

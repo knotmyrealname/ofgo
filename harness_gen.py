@@ -19,7 +19,9 @@ import time
 import subprocess
 import shutil
 
-from helpers import *
+from constants import *
+from logger_config import setup_logger
+from helpers import color_text, check_language_support, sync_dirs, ensure_dir_exists
 
 ## Variable declaration
 BENCHMARK_HEURISTICS = "far-reach-low-coverage,low-cov-with-fuzz-keyword,easy-params-far-reach"

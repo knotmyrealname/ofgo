@@ -63,8 +63,10 @@ export OPENAI_API_KEY=<your-API-key>
 
 Theoretically there's no reason Google's Vertex models wouldn't work if set up properly, but to enable support, set the environmental variable `SKIP_MODEL_CHECK` - our checks currently only work with OpenAI models. If there's enough interest, we can look into official support for other models, but that is currently not a priority. To set this environmental varaible, run the command:
 ```
-export SKIP_MODEL_CHECK
+export SKIP_MODEL_CHECK=1
 ```
+
+**IMPORTANT:** We believe that there may an issue with OSS-Fuzz-Gen's VertexAI integration - We attempted to utilize VertexAI for generation but ran into authentication issues that did not show up on our VertexAI test scripts.
 
 ## Usage
 Check out our detailed [usage guide](./USAGE.md) for documentation on available commands
